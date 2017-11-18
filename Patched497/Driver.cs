@@ -283,8 +283,6 @@ namespace ASCOM.LX90
                supportedActions.Add("SlewToAltAzAsync".ToLower());
                supportedActions.Add("SlewToCoordinatesAsync".ToLower());
                supportedActions.Add("SlewToTargetAsync".ToLower());
-               supportedActions.Add("SlewToTarget".ToLower());
-               supportedActions.Add("FindHome".ToLower());
             }
             return supportedActions;
          }
@@ -1634,18 +1632,6 @@ namespace ASCOM.LX90
             Patched497Queue.Instance.WorkQueue.Enqueue(() => isConnectedTask.RunSynchronously());
             isConnectedTask.Wait();
             return isConnectedTask.Result;
-         }
-      }
-
-      /// <summary>
-      /// Use this function to throw an exception if we aren't connected to the hardware
-      /// </summary>
-      /// <param name="message"></param>
-      private void CheckConnected(string message)
-      {
-         if (!IsConnected)
-         {
-            throw new ASCOM.NotConnectedException(message);
          }
       }
 
