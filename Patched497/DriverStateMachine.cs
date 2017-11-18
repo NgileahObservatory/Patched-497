@@ -63,9 +63,9 @@ namespace ASCOM.LX90
                   {
                      func.Invoke();
                   }
-                  catch (Exception)
+                  catch (Exception e)
                   {
-                     // TODO: Report the exception.
+                     Telescope.LogMessage("Exception in HBX work queue thread - ", e.Message);
                   }
                }
                else
@@ -595,7 +595,6 @@ namespace ASCOM.LX90
          return new SiderealTrackingState();
       }
 
-      private DateTime lastGoodUtcDate = DateTime.UtcNow;
       public override DateTime UTCDate()
       {
          // Get the mount local time. Add the UTC offset to get UTC time.
@@ -612,12 +611,11 @@ namespace ASCOM.LX90
                .AddMinutes(double.Parse(localTime.Substring(3, 2)))
                .AddSeconds(double.Parse(localTime.Substring(6, 2)));
             DateTimeOffset offset = new DateTimeOffset(dt, new TimeSpan(int.Parse(utcOffset), 0, 0));
-            lastGoodUtcDate = offset.DateTime.ToUniversalTime();
-            return lastGoodUtcDate;
+            return offset.DateTime.ToUniversalTime();
          }
          catch(Exception)
          {
-            return lastGoodUtcDate;
+            return DateTime.UtcNow;
          }
       }
    }

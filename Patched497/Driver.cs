@@ -84,9 +84,6 @@ namespace ASCOM.LX90
    // The ClassInterface/None addribute prevents an empty interface called
    // _LX90 from being created and used as the [default] interface
    //
-   // TODO Replace the not implemented exceptions with code to implement the function or
-   // throw the appropriate ASCOM exception.
-   //
 
    /// <summary>
    /// ASCOM Telescope Driver for LX90.
@@ -100,7 +97,6 @@ namespace ASCOM.LX90
       /// The DeviceID is used by ASCOM applications to load the driver at runtime.
       /// </summary>
       internal static string driverID = "ASCOM.LX90.Telescope";
-      // TODO Change the descriptive string for your driver then remove this line
       /// <summary>
       /// Driver description that displays in the ASCOM Chooser.
       /// </summary>
@@ -365,7 +361,6 @@ namespace ASCOM.LX90
 
       public string Description
       {
-         // TODO customise this device description
          get
          {
             if (tl.Enabled)
@@ -381,7 +376,6 @@ namespace ASCOM.LX90
          get
          {
             Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-            // TODO customise this driver description
             string driverInfo = driverDescription + " Version: " + String.Format(CultureInfo.InvariantCulture, "{0}.{1}", version.Major, version.Minor);
             if (tl.Enabled)
             {
