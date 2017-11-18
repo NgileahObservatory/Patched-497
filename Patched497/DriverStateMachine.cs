@@ -816,15 +816,15 @@ namespace ASCOM.LX90
          string rateStr = MoveAxisHelper.RateToRateCommandString(TelescopeAxes.axisPrimary, negateRaRate, rate);
          serialPort.Transmit(rateStr);
          // Then start the axis moving and leave it moving.
-         // Crude, but seeing if :RA can be made to work by -ve/+ve rate and always commanding a move in one direction.
-         if (rateStr.StartsWith(":RA"))
-            serialPort.Transmit(":Me#");
-         else
-            serialPort.Transmit(MoveAxisHelper.AxisToMovementDirectionCommandString(TelescopeAxes.axisPrimary, movingW));
+         serialPort.Transmit(MoveAxisHelper.AxisToMovementDirectionCommandString(TelescopeAxes.axisPrimary, movingW));
          return this;
       }
       public override DriverStateBase AbortSlew()
       {
+         if (HandleToCurrentScopeMoveTask != null)
+         {
+            ScopeMovementCancellationTokenSource.Cancel();
+         }
          // The abort slew will hopefully cause slews waited on to finish
          // Dual axis slew so kill slews in both axes.
          serialPort.Transmit(":Q" + (movingW ? "w" : "e") +"#");
@@ -903,6 +903,10 @@ namespace ASCOM.LX90
       }
       public override DriverStateBase AbortSlew()
       {
+         if (HandleToCurrentScopeMoveTask != null)
+         {
+            ScopeMovementCancellationTokenSource.Cancel();
+         }
          // The abort slew will hopefully cause slews waited on to finish
          // Dual axis slew so kill slews in both axes.
          serialPort.Transmit(":Q" + (movingN ? "n" : "s") + "#");
@@ -1088,6 +1092,10 @@ namespace ASCOM.LX90
       {
          if (!Telescope.guidingIsPulseGuideCommands())
          {
+            if (HandleToCurrentScopeMoveTask != null)
+            {
+               ScopeMovementCancellationTokenSource.Cancel();
+            }
             serialPort.Transmit(":Q" + (guideW ? "w" : "e") + "#");
          }
          return SavedAxisState.ResumeTracking();
@@ -1176,6 +1184,10 @@ namespace ASCOM.LX90
       {
          if (!Telescope.guidingIsPulseGuideCommands())
          {
+            if (HandleToCurrentScopeMoveTask != null)
+            {
+               ScopeMovementCancellationTokenSource.Cancel();
+            }
             serialPort.Transmit(":Q" + (guideN ? "n" : "s") + "#");
          }
          return SavedAxisState.ResumeTracking();
