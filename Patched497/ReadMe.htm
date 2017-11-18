@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE>Untitled Document</TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 3.2  (Win32)">
+	<META NAME="CREATED" CONTENT="0;0">
+	<META NAME="CHANGEDBY" CONTENT="Chris Rowland">
+	<META NAME="CHANGED" CONTENT="20110918;14150500">
+	<STYLE TYPE="text/css">
+	<!--
+		@page { margin: 2cm }
+		P { font-family: "Verdana", "Arial", "Helvetica", sans-serif; font-weight: normal }
+		TD P { font-family: "Verdana", "Arial", "Helvetica", sans-serif; font-weight: normal }
+		H3 { font-family: "Arial", "Helvetica", sans-serif }
+		H2 { font-family: "Arial", "Helvetica", sans-serif }
+		H4 { font-family: "Arial", "Helvetica", sans-serif }
+		TD P.note { background: #33ffff; font-family: "Verdana", "Arial", "Helvetica", sans-serif; font-weight: normal }
+		TD P.underline { font-family: "Verdana", "Arial", "Helvetica", sans-serif; font-weight: normal; text-decoration: underline }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-GB" DIR="LTR">
+<TABLE WIDTH=100% BORDER=0 CELLPADDING=4 CELLSPACING=0>
+	<TR>
+		<TD>
+			<H2>ASCOM.LX90.Telescope Driver (C#)</H2>
+		</TD>
+	</TR>
+</TABLE>
+<P><BR><BR>
+</P>
+<H4>The LX90/ETX driver is an in-process (assembly) based driver.</H4>
+Patches are available for Meade #497 handboxes. These add some new capabilities to
+the Meade LX90 and Etx model telescopes. Stock ASCOM drivers know nothing of these
+systems so this driver attempts to make features available via ASCOM that otherwise
+would not be.<br/><br/>
+Additionally the driver has come features such as setting the guide rate and compensating
+for asymmetric time based movement of the scope particularly at sidereal and less rate.
+These are a deliberate fudge around deficiencies in the mount when all else has failed.
+E.g. You have critically balanced the scope and equal time slews at sidereal E/W yield
+consistently different actual amounts of movement.<br/><br/>
+   <h5>SW Architecture.</h5>
+The driver is implemented as a GoF state pattern. A single worker thread is responsible for
+the servicing of a queue of operations. The opperations are responsible for any state
+changes on the axes. The GoF state pattern simply reduced invalid state transitions to 
+NOP. i.e. The SW architecture has natural and simply semantics that ensure only operations
+valid for any particular state are possible. All others do nothing.<br/><br/>
+A side effect of this rigor is that the protocol for operating the driver is inflexible and
+enforced. This will not suit all for sure, but the alternative is for example, to attempt
+pulse guiding whilst slewing or some similarly nonsensical driving of the mount.<br/><br/>
+State transition diagrams are provided for guidance.<br /><br />
+<h6>Slew to coordinates (Celestial or Alt/Az) state machine.</h6>
+<img src="SlewStateMachine.png" /><br /><br />
+<h6>Arbitrary move of axis/axes state machine.</h6>
+<img src="MoveAxisStateMachine.png" /><br /><br />
+<h6>Pulse guiding state machine.</h6>
+<img src="PulseGuidingState.png" /><br /><br />
+<HR>
+<DIV ALIGN=RIGHT>
+	<TABLE WIDTH=100% BORDER=0 CELLPADDING=4 CELLSPACING=0>
+		<TR>
+			<TD>
+				<TABLE WIDTH=100% BORDER=0 CELLPADDING=4 CELLSPACING=0>
+					<TR>
+						<TD>
+							<H3>ASCOM Initiative</H3>
+						</TD>
+						<TD>
+							<IMG SRC="ASCOM.png" NAME="graphics1" ALIGN=RIGHT WIDTH=48 HEIGHT=56 BORDER=0></TD>
+					</TR>
+				</TABLE>
+				<P><BR><BR>
+				</P>
+			</TD>
+		</TR>
+		<TR>
+			<TD>
+				<P>The ASCOM Initiative consists of a group of astronomy software
+				developers and instrument vendors whose goals are to promote the
+				driver/client model and scripting automation. 
+				</P>
+				<P>See the <A HREF="http://ascom-standards.org/" TARGET="browser">ASCOM
+				web site</A> for more information. Please participate in the
+				<A HREF="http://tech.groups.yahoo.com/group/ASCOM-Talk" TARGET="browser">ASCOM-Talk
+				Yahoo Group</A>. 
+				</P>
+			</TD>
+		</TR>
+	</TABLE>
+</DIV>
+<P><BR><BR>
+</P><P>
+<BR><BR>
+</P>
+</BODY>
+</HTML>
