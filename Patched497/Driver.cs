@@ -1041,7 +1041,7 @@ namespace ASCOM.LX90
                   directionStr = "S";
                   break;
             }
-            LogMessage("Pulse Guiding - ", directionStr + " for " + Duration.ToString() + "ms.");
+            LogMessage("Pulse Guiding - ", directionStr + " for " + Duration.ToString() + "ms if NOT slewing.");
          }
          Task pulseGuideTask = new Task(() =>
          {
