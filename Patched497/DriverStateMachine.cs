@@ -1055,7 +1055,7 @@ namespace ASCOM.LX90
          }
          else
          {
-            serialPort.Transmit(":Mg" + (guideW ? "w" : "e") + realDurationMs.ToString("D4") + "#");
+            serialPort.Transmit(":Mg" + (guideW ? "w" : "e") + realDurationMs.ToString() + "#");
          }
 
          // This is just a timer with checks for abort slew in effect.
@@ -1147,7 +1147,7 @@ namespace ASCOM.LX90
          }
          else
          {
-            serialPort.Transmit(":Mg" + (guideN ? "n" : "s") + realDurationMs.ToString("D4") + "#");
+            serialPort.Transmit(":Mg" + (guideN ? "n" : "s") + realDurationMs.ToString() + "#");
          }         
 
          // Task ensures we don't accept new pulse guides until this pulse guide has 
