@@ -65,7 +65,7 @@ namespace ASCOM.LX90
                   }
                   catch (Exception e)
                   {
-                     Telescope.LogMessage("Exception in HBX work queue thread - ", e.Message);
+                     Telescope.LogMessage("Exception in HBX work queue thread - \n", e.Message);
                   }
                }
                else
