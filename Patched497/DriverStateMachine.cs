@@ -1030,7 +1030,7 @@ namespace ASCOM.LX90
 
          // 4ms to 32ms. Given we have a range of 4 to 32,000. We restrict to 4 digits by the look
          // of the Meade spec giving us an absolute rante of 4 - 9999ms.
-         int realDurationMs = durationMs < 4 ? 4 : (durationMs > 9999 ? 9999 : durationMs);
+         int realDurationMs = durationMs < 4 ? 4 : (durationMs > 32000 ? 32000 : durationMs);
 
          // Apply the mismatched guide performance fudge factor.
          Decimal guideSlewCoefDec = new Decimal(Telescope.guideSlewCoef);
@@ -1067,7 +1067,7 @@ namespace ASCOM.LX90
                while (DateTime.UtcNow < pulseGuideCompleteTime)
                {
                   ScopeMovementCancellationTokenSource.Token.ThrowIfCancellationRequested();
-                  Thread.Sleep(4);
+                  Thread.Sleep(1);
                }
                Patched497Queue.Instance.WorkQueue.Enqueue(() =>
                   MasterCurrentState = MasterCurrentState.InternalPulseGuideComplete());
@@ -1130,7 +1130,7 @@ namespace ASCOM.LX90
       {
          ScopeMovementCancellationTokenSource = new CancellationTokenSource();
 
-         int realDurationMs = durationMs < 4 ? 4 : durationMs;
+         int realDurationMs = durationMs < 4 ? 4 : durationMs > 32000 ? 32000 : durationMs;
          if (Telescope.guidingIsRaReCommands())
          {
             double guideRate = Telescope.guideRate * LX90.AxisRates.Sidereal;
@@ -1160,7 +1160,7 @@ namespace ASCOM.LX90
                while (DateTime.UtcNow < pulseGuideCompleteTime)
                {
                   ScopeMovementCancellationTokenSource.Token.ThrowIfCancellationRequested();
-                  Thread.Sleep(4);
+                  Thread.Sleep(1);
                }
                Patched497Queue.Instance.WorkQueue.Enqueue(() =>
                   SecondaryAxisCurrentState = SecondaryAxisCurrentState.InternalPulseGuideComplete());

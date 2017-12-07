@@ -1043,13 +1043,20 @@ namespace ASCOM.LX90
             }
             LogMessage("Pulse Guiding - ", directionStr + " for " + Duration.ToString() + "ms if NOT slewing.");
          }
-         Task pulseGuideTask = new Task(() =>
+
+         // Mount supports 4ms to 32000ms.
+         // Our of range, no big deal, pretty sure that someone will get back to us
+         // if they need to again.
+         if (Duration > 4 && Duration < 32000)
          {
-            DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.PulseGuide(Direction, Duration);
-         });
-         Patched497Queue.Instance.WorkQueue.Enqueue(() => pulseGuideTask.RunSynchronously());
-         // This waits only as long as the item is in the queue and then runs.
-         pulseGuideTask.Wait();
+            Task pulseGuideTask = new Task(() =>
+            {
+               DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.PulseGuide(Direction, Duration);
+            });
+            Patched497Queue.Instance.WorkQueue.Enqueue(() => pulseGuideTask.RunSynchronously());
+            // This waits only as long as the item is in the queue and then runs.
+            pulseGuideTask.Wait();
+         }
       }
 
       public bool IsPulseGuiding
