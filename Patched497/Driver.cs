@@ -1045,10 +1045,17 @@ namespace ASCOM.LX90
          }
 
          // Mount supports 4ms to 32000ms.
-         // Our of range, no big deal, pretty sure that someone will get back to us
-         // if they need to again.
-         if (Duration > 4 && Duration < 32000)
+         // Low end of of range < 4ms, no big deal, pretty sure that someone will get back to us
+         // if they need to again. i.e. Next time is likely to be > 4ms.
+         if (Duration > 4)
          {
+            if (Duration > 32000)
+            {
+               // Exceeding upper end of range, this is a bit more extra ordinary. We can't give better
+               // than our max.
+               throw new ASCOM.InvalidValueException("Supported range for pulse guiding is 4ms to 32000ms.");
+            }
+
             Task pulseGuideTask = new Task(() =>
             {
                DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.PulseGuide(Direction, Duration);
