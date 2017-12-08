@@ -37,9 +37,10 @@ Name: "{cf}\ASCOM\Uninstall\Telescope\Patched497"
 Source: "C:\ASCOM\Projects\Patched497\Patched497\bin\Release\ASCOM.LX90.Telescope.dll"; DestDir: "{app}"
 ; Require a read-me HTML to appear after installation, maybe driver's Help doc
 Source: "C:\ASCOM\Projects\Patched497\Patched497\ReadMe.htm"; DestDir: "{app}"; Flags: isreadme
-Source: "C:\ASCOM\Projects\Patched497\Patched497\PulseGuidingState.png"; DestDir: "{app}";
-Source: "C:\ASCOM\Projects\Patched497\Patched497\SlewStateMachine.png"; DestDir: "{app}";
-Source: "C:\ASCOM\Projects\Patched497\Patched497\MoveAxisStateMachine.png"; DestDir: "{app}";
+Source: "C:\ASCOM\Projects\Patched497\Patched497\docs\PulseGuidingStateMachine.png"; DestDir: "{app}\docs";
+Source: "C:\ASCOM\Projects\Patched497\Patched497\docs\SlewStateMachine.png"; DestDir: "{app}\docs";
+Source: "C:\ASCOM\Projects\Patched497\Patched497\docs\MoveAxisStateMachine.png"; DestDir: "{app}\docs";
+Source: "C:\ASCOM\Projects\Patched497\Patched497\docs\DriverSetup.png"; DestDir: "{app}\docs";
 
 
 ; Only if driver is .NET

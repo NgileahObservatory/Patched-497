@@ -19,6 +19,7 @@ namespace ASCOM.LX90
          {
             if (form != null && driver != null && driver.Connected)
             {
+               refreshTimer.Stop();
                Util utilities = new Util();
                DateTime scopeUtc = driver.UTCDate;
                form.utcDateLabel.Text = scopeUtc.ToShortDateString() + " " + scopeUtc.ToShortTimeString();
@@ -30,6 +31,7 @@ namespace ASCOM.LX90
                form.azLabel.Text = String.Format("{0:0.00000}", driver.Azimuth);
                form.altLabel.Text = String.Format("{0:0.00000}", driver.Altitude);
                form.lstLabel.Text = String.Format("{0:0.00000}",driver.SiderealTime);
+               refreshTimer.Start();
             }
          }
          catch(Exception e)
@@ -44,6 +46,7 @@ namespace ASCOM.LX90
          InitializeComponent();
          SetUIState();
          form = this;
+         refreshStateData(null, null);
          refreshTimer = new System.Windows.Forms.Timer();
          refreshTimer.Tick += new EventHandler(refreshStateData);
          refreshTimer.Interval = 2000;

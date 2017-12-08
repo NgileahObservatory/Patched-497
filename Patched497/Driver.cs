@@ -257,6 +257,14 @@ namespace ASCOM.LX90
          }
       }
 
+      internal bool AltAzSupported
+      {
+         get
+         {
+            return AlignmentMode == AlignmentModes.algAltAz;
+         }
+      }
+
       private ArrayList supportedActions = new ArrayList();
       public ArrayList SupportedActions
       {
@@ -276,7 +284,11 @@ namespace ASCOM.LX90
                supportedActions.Add("Park".ToLower());
                supportedActions.Add("PulseGuide".ToLower());
                supportedActions.Add("SetupDialog".ToLower());
-               supportedActions.Add("SlewToAltAzAsync".ToLower());
+               if (AltAzSupported)
+               {
+                  supportedActions.Add("SlewToAltAzAsync".ToLower());
+                  supportedActions.Add("SyncToAltAz".ToLower());
+               }
                supportedActions.Add("SlewToCoordinatesAsync".ToLower());
                supportedActions.Add("SlewToTargetAsync".ToLower());
             }
@@ -756,7 +768,7 @@ namespace ASCOM.LX90
             {
                LogMessage("CanSlewAltAzAsync Get - ", true.ToString());
             }
-            return true;
+            return AltAzSupported;
          }
       }
 
@@ -798,7 +810,7 @@ namespace ASCOM.LX90
             {
                LogMessage("CanSyncAltAz Get - ", true.ToString());
             }
-            return true;
+            return AltAzSupported;
          }
       }
 
@@ -1285,6 +1297,10 @@ namespace ASCOM.LX90
 
       public void SlewToAltAzAsync(double Azimuth, double Altitude)
       {
+         if (!CanSyncAltAz)
+         {
+            throw new ASCOM.InvalidOperationException("SlewToAltAzAsync in Alt/Az mount mode only.");
+         }
          throwOnDisconnectedOrParked();
          if (tl.Enabled)
          {
@@ -1339,6 +1355,10 @@ namespace ASCOM.LX90
 
       public void SyncToAltAz(double Azimuth, double Altitude)
       {
+         if (!CanSyncAltAz)
+         {
+            throw new ASCOM.InvalidOperationException("SyncToAltAz in Alt/Az mount mode only.");
+         }
          throwOnDisconnectedOrParked();
          if (tl.Enabled)
          {

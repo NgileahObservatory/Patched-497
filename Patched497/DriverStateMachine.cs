@@ -443,53 +443,13 @@ namespace ASCOM.LX90
       public override AlignmentModes AlignmentMode()
       {
          serialPort.Transmit(":GW#");
-         string alignment = serialPort.ReceiveTerminated("#").Replace("#", "");
-         if (alignment.Contains("<A>"))
+         string alignment = serialPort.ReceiveCounted(3);
+         if (alignment.StartsWith("A"))
             return AlignmentModes.algAltAz;
-         else if (alignment.Contains("<P>"))
+         else if (alignment.StartsWith("P"))
             return AlignmentModes.algPolar;
          else
             throw new ASCOM.DriverException("Unsupported alignment returned by the mount: " + alignment);
-      }
-
-      /// <summary>
-      /// The mount Alt/Az coodinates are horizon relative and assume that the
-      /// Az axis is pointed straight up and not at the pole. The expectation of
-      /// the ASCOM interface is that the mount is providing the Alt/Az relative to the
-      /// horizon regardless of Polar or Alt/Az mounting. So...
-      /// 
-      /// </summary>
-      /// <returns>Correct altitude in horizontal coordinates. i.e. Not mount relative.</returns>
-      internal double toHorizAltFromMountRelativeAlt(double requestedAlt)
-      {
-         if (AlignmentMode() == AlignmentModes.algPolar)
-         {
-            return requestedAlt + (double)(new Decimal(90.0) - Math.Abs(new Decimal(SiteLatitude())));
-         }
-         else
-         {
-            return requestedAlt;
-         }
-      }
-
-      /// <summary>
-      /// The mount Alt/Az coodinates are horizon relative and assume that the
-      /// Az axis is pointed straight up and not at the pole. The expectation of
-      /// the ASCOM interface is that the mount is providing the Alt/Az relative to the
-      /// horizon regardless of Polar or Alt/Az mounting. So...
-      /// 
-      /// </summary>
-      /// <returns>Correct altitude in mount relative coordinates.</returns>
-      internal double toMountRelativeAltFromHorizAlt(double horizAlt)
-      {
-         if (AlignmentMode() == AlignmentModes.algPolar)
-         {
-            return horizAlt - (double)(new Decimal(90.0) - Math.Abs(new Decimal(SiteLatitude())));
-         }
-         else
-         {
-            return horizAlt;
-         }
       }
 
       public override double Altitude()
@@ -501,7 +461,7 @@ namespace ASCOM.LX90
          altitude = altitude.Replace('\'', ':');
          if (altitude.Length == 6)
             altitude += ":00";
-         return toHorizAltFromMountRelativeAlt(utilities.DMSToDegrees(altitude));
+         return utilities.DMSToDegrees(altitude);
       }
 
       public override double Azimuth()
@@ -1260,7 +1220,7 @@ namespace ASCOM.LX90
             }
 
             // Valid because otherwise we throw.
-            string Alt = utilities.DegreesToDM(toMountRelativeAltFromHorizAlt(Altitude), "*", "");
+            string Alt = utilities.DegreesToDM(Altitude, "*", "");
             serialPort.Transmit(":Sa" + Alt + "#");
             valid = serialPort.ReceiveCountedBinary(1);
             if (valid[0] != '1')
@@ -1518,7 +1478,7 @@ namespace ASCOM.LX90
          }
 
          // Valid because otherwise we throw.
-         string Alt = utilities.DegreesToDM(toMountRelativeAltFromHorizAlt(Altitude), "*", "");
+         string Alt = utilities.DegreesToDM(Altitude, "*", "");
          serialPort.Transmit(":Sa" + Alt + "#");
          valid = serialPort.ReceiveCountedBinary(1);
          if (valid[0] != 1 && !valid[0].ToString().Equals("1"))
