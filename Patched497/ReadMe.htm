@@ -30,34 +30,73 @@
 </TABLE>
 <P><BR><BR>
 </P>
-<H4>The LX90/ETX driver is an in-process (assembly) based driver.</H4>
+<H1>The LX90/ETX driver is an in-process (assembly) based driver.</H1>
 Patches are available for Meade #497 handboxes. These add some new capabilities to
 the Meade LX90 and Etx model telescopes. Stock ASCOM drivers know nothing of these
 systems so this driver attempts to make features available via ASCOM that otherwise
 would not be.<br/><br/>
-Additionally the driver has come features such as setting the guide rate and compensating
+Additionally the driver has some features such as setting the guide rate and compensating
 for asymmetric time based movement of the scope particularly at sidereal and less rate.
 These are a deliberate fudge around deficiencies in the mount when all else has failed.
 E.g. You have critically balanced the scope and equal time slews at sidereal E/W yield
 consistently different actual amounts of movement.<br/><br/>
-<h4>Setup</h4>
-   <img src="DriverSetup.png"/><br/><br/>
-   <h5>SW Architecture.</h5>
+<h2>Setup</h2>
+   <p>
+      <img src="docs/DriverSetup.png" align="left" hspace="20" vspace="20"/>
+      <ol>
+         <li>Com port. No searching of ports for a scope is made so set this yourself.</li>
+         <li>
+            Guide Rate. Set whatever your guide rate ACTUALLY proves to be here if you can use the Meade Pulse Guide commands or custom guide rate you want if you intend to guide 
+            with :RA#/:RE# commands on your mount. See the notes below about using Meade move commands and using this value to scale time at sidereal rate.
+            Experimentally pulse guide ocmmands on my LX90 yields a guide rate 0.5 × Sidereal. If you can only use the Meade move commands at sidereal, this value will be used to
+            scale the time of the sidereal movements such that the mount behaves as if its guide rate is the value you specified here.
+         </li>
+         <li>
+            This is where you can compensate for asymmetric guide slew performance. You may see this calibrating a guiding program like PHD/2 guiding for example.
+            Fundamentally, equal time slewed E/W yields a different distance moved. The value entered here will scale the time of the slew in the direction selected (East/West)
+            such that you should be able to obtain an equal distance slewed over time in each direction. Scale down not up. i.e.
+         </li>
+         <li>
+            Check to indicate that you wish to use the HIGHLY EXPERIMENTAL :RA#/:RE# features of a patched handset. As of this release this behaviour is not really working.
+            Feel free to modify the source code if you can solve the mystery of how these commands are supposed to work!
+         </li>
+         <li>
+            Indicate in which direction a negative value (decimal degrees) should move the mount. i.e. If slewing E with +ve value actually moves W, check the "-ve :RA# moves E" option.
+            Similarly for :RE#.
+         </li>
+         <li>
+            Select how you want to pulse guide.<br/>
+               <i>Pulse guide commands.</i> There is some funkiness around these commands especially if you have changed time zones or similar. I have seen the following behaviour:
+               turn on the mount. Experiment with pulse guiding. Mount moves. Change timezone. Mount no longer responds to pulse guide commands. The problem appears to be a long
+               standing bug in the Meade firmware. The mount can get its local sidereal time thoroughly wrong, toggling the time zone fixes this but can kill pulse guiding. Go figure.<br />
+               <i>:RA#/:RE# at guide rate.</i> Whatever arbitrary guide rate you set, the driver will issue :RA#/:RE# commands at that arbitrary rate.<br />
+               <i>Move commands at sidereal.</i> These are the classic Meade move commands at sidereal scaled by the guide rate. e.g. Specify a guide rate of 0.5 and pulse guide
+               durations requested will be scaled down by 0.5 such at a 1s guide pulse becomes a 0.5s move.<br />
+         </li>
+         <li>
+            Focal length, aperture, secondary diameter and site elevation are required by ASCOM but not obtained from the mount. These are static values and should match your
+            mount, OTA and site location.
+         </li>
+      </ol>
+   </p>
+   <h2>SW Architecture.</h2>
 The driver is implemented as a GoF state pattern. A single worker thread is responsible for
 the servicing of a queue of operations. The opperations are responsible for any state
-changes on the axes. The GoF state pattern simply reduced invalid state transitions to 
-NOP. i.e. The SW architecture has natural and simply semantics that ensure only operations
+changes on the axes. The GoF state pattern simply reduces invalid state transitions to 
+NOP. i.e. The SW architecture has natural and simple semantics that ensure only operations
 valid for any particular state are possible. All others do nothing.<br/><br/>
 A side effect of this rigor is that the protocol for operating the driver is inflexible and
 enforced. This will not suit all for sure, but the alternative is for example, to attempt
 pulse guiding whilst slewing or some similarly nonsensical driving of the mount.<br/><br/>
 State transition diagrams are provided for guidance.<br /><br />
-<h6>Slew to coordinates (Celestial or Alt/Az) state machine.</h6>
-<img src="SlewStateMachine.png" /><br /><br />
-<h6>Arbitrary move of axis/axes state machine.</h6>
-<img src="MoveAxisStateMachine.png" /><br /><br />
-<h6>Pulse guiding state machine.</h6>
-<img src="PulseGuidingState.png" /><br /><br />
+Additionally, ASCOM has its own protocol and to work properly as an ASCOM driver, we must conform to the expectations of the ASCOM.Telescope interface. The state machine
+enforces the expectations of the interface.
+<h3>Slew to coordinates (Celestial or Alt/Az) state machine.</h3>
+<img src="docs/SlewStateMachine.png" /><br /><br />
+<h3>Arbitrary move of axis/axes state machine.</h3>
+<img src="docs/MoveAxisStateMachine.png" /><br /><br />
+<h3>Pulse guiding state machine.</h3>
+<img src="docs/PulseGuidingStateMachine.png" /><br /><br />
 <HR>
 <DIV ALIGN=RIGHT>
 	<TABLE WIDTH=100% BORDER=0 CELLPADDING=4 CELLSPACING=0>
