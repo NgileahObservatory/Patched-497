@@ -124,10 +124,10 @@ namespace ASCOM.LX90
       internal static string elevationDefault = "100";
       internal static string hasCustomRatesProfileName = "Has RA/Dec Axis Custom Rates";
       internal static string hasCustomRatesDefault = "true";
-      internal static string negRAMovesEProfileName = "Negative :RA# moves E";
-      internal static string negRAMovesEDefault = "true";
-      internal static string negREMovesNProfileName = "Negative :RE# moves N";
-      internal static string negREMovesNDefault = "true";
+      internal static string customRateReverseLRProfileName = "Custom rate :RA# reverse L/R";
+      internal static string customRateReverseLRDefault = "true";
+      internal static string customRateReverseUDProfileName = "Custom rate :RE# reverse U/D";
+      internal static string customRateReverseUDDefault = "true";
       internal static string guideRateAlgorithmProfileName = "Guide rate algorithm";
       internal static string guideRateAlgorithmDefault = "Pulse Guide";
       internal static string guideRateAlgorithmRaRe = ":RA#/:RE#";
@@ -142,8 +142,8 @@ namespace ASCOM.LX90
       internal static double secondaryDiameter;
       internal static double elevation;
       internal static bool hasCustomRates;
-      internal static bool negRAMovesE;
-      internal static bool negREMovesN;
+      internal static bool customRateReverseLR;
+      internal static bool customRateReverseUD;
       internal static string guideRateAlgorithm;
       internal static bool verbose;
 
@@ -1683,8 +1683,8 @@ namespace ASCOM.LX90
             secondaryDiameter = Double.Parse(driverProfile.GetValue(driverID, secondaryDiameterProfileName, string.Empty, secondaryDiameterDefault));
             elevation = Double.Parse(driverProfile.GetValue(driverID, elevationProfileName, string.Empty, elevationDefault));
             hasCustomRates = Boolean.Parse(driverProfile.GetValue(driverID, hasCustomRatesProfileName, string.Empty, hasCustomRatesDefault));
-            negRAMovesE = Boolean.Parse(driverProfile.GetValue(driverID, negRAMovesEProfileName, string.Empty, negRAMovesEDefault));
-            negREMovesN = Boolean.Parse(driverProfile.GetValue(driverID, negREMovesNProfileName, string.Empty, negREMovesNDefault));
+            customRateReverseLR = Boolean.Parse(driverProfile.GetValue(driverID, customRateReverseLRProfileName, string.Empty, customRateReverseLRDefault));
+            customRateReverseUD = Boolean.Parse(driverProfile.GetValue(driverID, customRateReverseUDProfileName, string.Empty, customRateReverseUDDefault));
             guideRateAlgorithm = driverProfile.GetValue(driverID, guideRateAlgorithmProfileName, string.Empty, guideRateAlgorithmDefault);
             verbose = tl.Enabled && Boolean.Parse(driverProfile.GetValue(driverID, verboseProfilename, string.Empty, verboseDefault));
          }
@@ -1712,8 +1712,8 @@ namespace ASCOM.LX90
             driverProfile.WriteValue(driverID, secondaryDiameterProfileName, secondaryDiameter.ToString());
             driverProfile.WriteValue(driverID, elevationProfileName, elevation.ToString());
             driverProfile.WriteValue(driverID, hasCustomRatesProfileName, hasCustomRates.ToString());
-            driverProfile.WriteValue(driverID, negRAMovesEProfileName, negRAMovesE.ToString());
-            driverProfile.WriteValue(driverID, negREMovesNProfileName, negREMovesN.ToString());
+            driverProfile.WriteValue(driverID, customRateReverseLRProfileName, customRateReverseLR.ToString());
+            driverProfile.WriteValue(driverID, customRateReverseUDProfileName, customRateReverseUD.ToString());
             driverProfile.WriteValue(driverID, guideRateAlgorithmProfileName, guideRateAlgorithm);
          }
       }

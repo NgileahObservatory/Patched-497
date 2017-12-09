@@ -37,8 +37,8 @@ namespace ASCOM.LX90
          Telescope.secondaryDiameter = (double) secondaryDiaUpDown.Value;
          Telescope.elevation = (double) elevationUpDown.Value;
          Telescope.hasCustomRates = customRates.Checked;
-         Telescope.negRAMovesE = negRAMovesEcheckBox.Checked;
-         Telescope.negREMovesN = negREMovesNcheckBox.Checked;
+         Telescope.customRateReverseLR = customRateReverseLRSlewCheckBox.Checked;
+         Telescope.customRateReverseUD = customRateReverseUpDnSlewCheckBox.Checked;
          Telescope.guideRateAlgorithm = raReGuideRadioButton.Checked && customRates.Checked
             ? Telescope.guideRateAlgorithmRaRe
             : (moveGuideRadioButton.Checked
@@ -89,8 +89,8 @@ namespace ASCOM.LX90
          elevationUpDown.Value = new Decimal(Telescope.elevation);
          customRates.Checked = Telescope.hasCustomRates;
          customRateDirectionGroupBox.Enabled = customRates.Checked;
-         negRAMovesEcheckBox.Checked = Telescope.negRAMovesE;
-         negREMovesNcheckBox.Checked = Telescope.negREMovesN;
+         customRateReverseLRSlewCheckBox.Checked = Telescope.customRateReverseLR;
+         customRateReverseUpDnSlewCheckBox.Checked = Telescope.customRateReverseUD;
          pulseGuideRadioButton.Checked = Telescope.guidingIsPulseGuideCommands();
          raReGuideRadioButton.Enabled = Telescope.hasCustomRates;
          raReGuideRadioButton.Checked = Telescope.guidingIsRaReCommands();

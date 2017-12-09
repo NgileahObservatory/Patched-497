@@ -745,7 +745,7 @@ namespace ASCOM.LX90
    public partial class MoveAxisHelper
    {
       // Convert the rate on the axis to a Meade serial protocol axis rate command.
-      public static string RateToRateCommandString(TelescopeAxes Axis, bool negateRaReRate, Rate rate)
+      public static string RateToRateCommandString(TelescopeAxes Axis, Rate rate)
       {
          if (AxisRates.ratesApproxEqual(rate.Minimum, ASCOM.LX90.AxisRates.Sidereal))
          {
@@ -765,8 +765,14 @@ namespace ASCOM.LX90
          }
          else if (rate.Minimum > ASCOM.LX90.AxisRates.Siderealx2 && rate.Minimum < ASCOM.LX90.AxisRates.SlewSixPointFiveDegreePerSec)
          {
-            double raReRate = negateRaReRate ? -rate.Minimum : rate.Minimum;
-            return (Axis == TelescopeAxes.axisPrimary ? ":RA" : ":RE") + String.Format("{0:0.00000;-0.00000}", raReRate) + "#";
+            if (Axis == TelescopeAxes.axisPrimary)
+            {
+               return ":RA" + String.Format("{0:0.0####;-0.0####}", Telescope.customRateReverseLR ? -rate.Minimum : rate.Minimum) + "#";
+            }
+            else
+            {
+               return ":RE" + String.Format("{0:0.0####;-0.0####}", Telescope.customRateReverseUD ? -rate.Minimum : rate.Minimum) + "#";
+            }
          }
          else
          {
@@ -811,10 +817,8 @@ namespace ASCOM.LX90
       }
       private DriverStateBase InternalMoveAxis(Rate rate)
       {
-         bool negateRaRate = (movingW && !Telescope.negRAMovesE) || (!movingW && Telescope.negRAMovesE);
          // First set desired slew rate.
-         string rateStr = MoveAxisHelper.RateToRateCommandString(TelescopeAxes.axisPrimary, negateRaRate, rate);
-         serialPort.Transmit(rateStr);
+         serialPort.Transmit(MoveAxisHelper.RateToRateCommandString(TelescopeAxes.axisPrimary, rate));
          // Then start the axis moving and leave it moving.
          serialPort.Transmit(MoveAxisHelper.AxisToMovementDirectionCommandString(TelescopeAxes.axisPrimary, movingW));
          return this;
@@ -889,16 +893,10 @@ namespace ASCOM.LX90
       }
       private DriverStateBase InternalMoveAxis(Rate rate)
       {
-         bool negateReRate = (movingN && Telescope.negREMovesN) || (!movingN && !Telescope.negREMovesN);
          // First set desired slew rate.
-         string rateStr = MoveAxisHelper.RateToRateCommandString(TelescopeAxes.axisSecondary, negateReRate, rate);
-         serialPort.Transmit(rateStr);
-         // Crude, but seeing if :RE can be made to work by -ve/+ve rate and always commanding a move in one direction.
-         if (rateStr.StartsWith(":RE"))
-            serialPort.Transmit(":Mn#");
-         else
-            // Then start the axis moving and leave it moving.
-            serialPort.Transmit(MoveAxisHelper.AxisToMovementDirectionCommandString(TelescopeAxes.axisSecondary, movingN));
+         serialPort.Transmit(MoveAxisHelper.RateToRateCommandString(TelescopeAxes.axisSecondary, rate));
+         // Then slew in the direction that will move the telescope in the direction requested (note: this may require Up/Dn reversal).
+         serialPort.Transmit(MoveAxisHelper.AxisToMovementDirectionCommandString(TelescopeAxes.axisSecondary, movingN));
          return this;
       }
       public override DriverStateBase AbortSlew()
@@ -1042,8 +1040,12 @@ namespace ASCOM.LX90
          if (Telescope.guidingIsRaReCommands())
          {
             double guideRate = Telescope.guideRate * LX90.AxisRates.Sidereal;
-            guideRate *= (guideW && !Telescope.negRAMovesE) || (!guideW && Telescope.negRAMovesE) ? -1.0 : 1.0;
-            serialPort.Transmit(":RA" + String.Format("{0:0.00000;-0.00000}", guideRate) + "#");
+            if (Telescope.customRateReverseLR)
+            {
+               // Negate the rate, reverses L/R for :RA#.
+               guideRate = -guideRate;
+            }
+            serialPort.Transmit(":RA" + String.Format("{0:0.0####;-0.0####}", guideRate) + "#");
             serialPort.Transmit(MoveAxisHelper.AxisToMovementDirectionCommandString(TelescopeAxes.axisPrimary, guideW));
          }
          else if(Telescope.guidingIsMoveCommands())
@@ -1134,8 +1136,12 @@ namespace ASCOM.LX90
          if (Telescope.guidingIsRaReCommands())
          {
             double guideRate = Telescope.guideRate * LX90.AxisRates.Sidereal;
-            guideRate *= (guideN && Telescope.negREMovesN) || (!guideN && !Telescope.negREMovesN) ? -1.0 : 1.0;
-            serialPort.Transmit(":RE" + String.Format("{0:0.00000;-0.00000}", guideRate) + "#");
+            if (Telescope.customRateReverseUD)
+            {
+               // Negate the guide rate. Reverse U/D for :RE# commands
+               guideRate = -guideRate;
+            }
+            serialPort.Transmit(":RE" + String.Format("{0:0.0####;-0.0####}", guideRate) + "#");
             serialPort.Transmit(MoveAxisHelper.AxisToMovementDirectionCommandString(TelescopeAxes.axisSecondary, guideN));
          }
          else if (Telescope.guidingIsMoveCommands())

@@ -57,8 +57,8 @@ namespace ASCOM.LX90
          this.label11 = new System.Windows.Forms.Label();
          this.customRates = new System.Windows.Forms.CheckBox();
          this.customRateDirectionGroupBox = new System.Windows.Forms.GroupBox();
-         this.negREMovesNcheckBox = new System.Windows.Forms.CheckBox();
-         this.negRAMovesEcheckBox = new System.Windows.Forms.CheckBox();
+         this.customRateReverseUpDnSlewCheckBox = new System.Windows.Forms.CheckBox();
+         this.customRateReverseLRSlewCheckBox = new System.Windows.Forms.CheckBox();
          this.pulseGuideAlgGroupBox = new System.Windows.Forms.GroupBox();
          this.moveGuideRadioButton = new System.Windows.Forms.RadioButton();
          this.raReGuideRadioButton = new System.Windows.Forms.RadioButton();
@@ -457,8 +457,8 @@ namespace ASCOM.LX90
          // 
          // customRateDirectionGroupBox
          // 
-         this.customRateDirectionGroupBox.Controls.Add(this.negREMovesNcheckBox);
-         this.customRateDirectionGroupBox.Controls.Add(this.negRAMovesEcheckBox);
+         this.customRateDirectionGroupBox.Controls.Add(this.customRateReverseUpDnSlewCheckBox);
+         this.customRateDirectionGroupBox.Controls.Add(this.customRateReverseLRSlewCheckBox);
          this.customRateDirectionGroupBox.Location = new System.Drawing.Point(78, 220);
          this.customRateDirectionGroupBox.Name = "customRateDirectionGroupBox";
          this.customRateDirectionGroupBox.Size = new System.Drawing.Size(261, 64);
@@ -466,25 +466,25 @@ namespace ASCOM.LX90
          this.customRateDirectionGroupBox.TabStop = false;
          this.customRateDirectionGroupBox.Text = ":RA#/:RE# direction control";
          // 
-         // negREMovesNcheckBox
+         // customRateReverseUpDnSlewCheckBox
          // 
-         this.negREMovesNcheckBox.AutoSize = true;
-         this.negREMovesNcheckBox.Location = new System.Drawing.Point(10, 41);
-         this.negREMovesNcheckBox.Name = "negREMovesNcheckBox";
-         this.negREMovesNcheckBox.Size = new System.Drawing.Size(114, 17);
-         this.negREMovesNcheckBox.TabIndex = 29;
-         this.negREMovesNcheckBox.Text = "-ve :RE# moves N";
-         this.negREMovesNcheckBox.UseVisualStyleBackColor = true;
+         this.customRateReverseUpDnSlewCheckBox.AutoSize = true;
+         this.customRateReverseUpDnSlewCheckBox.Location = new System.Drawing.Point(10, 41);
+         this.customRateReverseUpDnSlewCheckBox.Name = "customRateReverseUpDnSlewCheckBox";
+         this.customRateReverseUpDnSlewCheckBox.Size = new System.Drawing.Size(184, 17);
+         this.customRateReverseUpDnSlewCheckBox.TabIndex = 29;
+         this.customRateReverseUpDnSlewCheckBox.Text = "Reverse Up/Dn Slew (:RE# only)";
+         this.customRateReverseUpDnSlewCheckBox.UseVisualStyleBackColor = true;
          // 
-         // negRAMovesEcheckBox
+         // customRateReverseLRSlewCheckBox
          // 
-         this.negRAMovesEcheckBox.AutoSize = true;
-         this.negRAMovesEcheckBox.Location = new System.Drawing.Point(10, 18);
-         this.negRAMovesEcheckBox.Name = "negRAMovesEcheckBox";
-         this.negRAMovesEcheckBox.Size = new System.Drawing.Size(113, 17);
-         this.negRAMovesEcheckBox.TabIndex = 0;
-         this.negRAMovesEcheckBox.Text = "-ve :RA# moves E";
-         this.negRAMovesEcheckBox.UseVisualStyleBackColor = true;
+         this.customRateReverseLRSlewCheckBox.AutoSize = true;
+         this.customRateReverseLRSlewCheckBox.Location = new System.Drawing.Point(10, 18);
+         this.customRateReverseLRSlewCheckBox.Name = "customRateReverseLRSlewCheckBox";
+         this.customRateReverseLRSlewCheckBox.Size = new System.Drawing.Size(170, 17);
+         this.customRateReverseLRSlewCheckBox.TabIndex = 0;
+         this.customRateReverseLRSlewCheckBox.Text = "Reverse L/R Slew (:RA# only)";
+         this.customRateReverseLRSlewCheckBox.UseVisualStyleBackColor = true;
          // 
          // pulseGuideAlgGroupBox
          // 
@@ -630,8 +630,8 @@ namespace ASCOM.LX90
       private System.Windows.Forms.Label label11;
       private System.Windows.Forms.CheckBox customRates;
       private System.Windows.Forms.GroupBox customRateDirectionGroupBox;
-      private System.Windows.Forms.CheckBox negRAMovesEcheckBox;
-      private System.Windows.Forms.CheckBox negREMovesNcheckBox;
+      private System.Windows.Forms.CheckBox customRateReverseLRSlewCheckBox;
+      private System.Windows.Forms.CheckBox customRateReverseUpDnSlewCheckBox;
       private System.Windows.Forms.GroupBox pulseGuideAlgGroupBox;
       private System.Windows.Forms.RadioButton moveGuideRadioButton;
       private System.Windows.Forms.RadioButton raReGuideRadioButton;
