@@ -81,7 +81,7 @@ consistently different actual amounts of movement.<br/><br/>
    </p>
    <h2>SW Architecture.</h2>
 The driver is implemented as a GoF state pattern. A single worker thread is responsible for
-the servicing of a queue of operations. The opperations are responsible for any state
+the servicing of a queue of operations. The operations are responsible for any state
 changes on the axes. The GoF state pattern simply reduces invalid state transitions to 
 NOP. i.e. The SW architecture has natural and simple semantics that ensure only operations
 valid for any particular state are possible. All others do nothing.<br/><br/>
