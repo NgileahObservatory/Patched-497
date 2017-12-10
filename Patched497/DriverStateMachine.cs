@@ -372,6 +372,22 @@ namespace ASCOM.LX90
             serialPort.Parity = SerialParity.None;
             serialPort.DataBits = 8;
             serialPort.Connected = true;
+
+            // This is a hack. If you issue :RA# or :RE# commands and have not first moved the scope
+            // by :Me#/:Mw# or by :Mn#/:Ms#, the :RA#/:RE# is ignored and you take off at whatever the
+            // rate last set on the HBX is. So a :RA0.004# (sidereal) slew can suddently take off at 6.5
+            // degrees per second!
+            //
+            // We are just going to jog the scope here and stop all slews when done.
+            serialPort.Transmit(":RG#");
+            serialPort.Transmit(":Me#");
+            Thread.Sleep(1);
+            serialPort.Transmit(":Q#");
+            serialPort.Transmit(":Mw#");
+            Thread.Sleep(1);
+            serialPort.Transmit(":Q#");
+
+            // Now kick off tracking.
             MasterCurrentState = TrackingStateHelper.TrackingStateForMount(serialPort);
             SecondaryAxisCurrentState = new SecondaryAxisTrackingState();
             return MasterCurrentState;
