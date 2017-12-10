@@ -135,7 +135,7 @@ namespace ASCOM.LX90
                      new Rate(Sidereal, SlewSixPointFiveDegreePerSec),
                      new Rate(Sidereal, Sidereal),       // Sidereal
                      new Rate(Siderealx2, Siderealx2),   // Second slowest.
-                     new Rate(SlewThreeDegreePerSec, SlewThreeDegreePerSec), // 2nd Fastest.
+                     new Rate(SlewThreeDegreePerSec, SlewHalfDegreePerSec), // Find rate.
                      new Rate(SlewSixPointFiveDegreePerSec, SlewSixPointFiveDegreePerSec), // Fastest
                   };
                }

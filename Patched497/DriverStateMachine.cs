@@ -27,56 +27,6 @@ namespace ASCOM.LX90
    // This region holds the driver State machine.
    #region Patched497StateMachine;
 
-   /// <summary>
-   /// All state requests and state changing operations come through here
-   /// and we ensure that no interleaved serial coms can happen for starters.
-   /// The state machine executes in here and therefore requires no locks AND
-   /// prevents all manner of invalid state transitions or operations invalid
-   /// on any given state.
-   /// </summary>
-   public class Patched497Queue
-   {
-      private static Patched497Queue instance = null;
-      public static Patched497Queue Instance
-      {
-         get
-         {
-            if (instance == null)
-            {
-               instance = new Patched497Queue();
-            }
-            return instance;
-         }
-      }
-
-      public ConcurrentQueue<Action> WorkQueue = new ConcurrentQueue<Action>();
-      private Patched497Queue()
-      {
-         Task.Factory.StartNew(() =>
-         {
-            Action func;
-            while (true)
-            {
-               if (WorkQueue.TryDequeue(out func))
-               {
-                  try
-                  {
-                     func.Invoke();
-                  }
-                  catch (Exception e)
-                  {
-                     Telescope.LogMessage("Exception in HBX work queue thread - \n", e.Message);
-                  }
-               }
-               else
-               {
-                  System.Threading.Thread.Sleep(1);
-               }
-            }
-         });
-      }
-   }
-
    ///////////////////////////////////////////////////////////////////
    /// <summary>
    /// All state transitions are found in this GoF state pattern.
@@ -125,7 +75,7 @@ namespace ASCOM.LX90
          }
       }
 
-      protected static ASCOM.Utilities.Serial serialPort = null;
+      internal static ASCOM.Utilities.Serial serialPort = null;
       protected Util utilities = null;
       public DriverStateBase() 
       {
@@ -314,6 +264,57 @@ namespace ASCOM.LX90
       public virtual DateTime UTCDate()
       {
          throw new ASCOM.NotConnectedException("Attempted to get UTC date of disconnected mount.");
+      }
+   }
+
+   /// <summary>
+   /// All state requests and state changing operations come through here
+   /// and we ensure that no interleaved serial coms can happen for starters.
+   /// The state machine executes in here and therefore requires no locks AND
+   /// prevents all manner of invalid state transitions or operations invalid
+   /// on any given state.
+   /// </summary>
+   public class Patched497Queue
+   {
+      private static Patched497Queue instance = null;
+      public static Patched497Queue Instance
+      {
+         get
+         {
+            if (instance == null)
+            {
+               instance = new Patched497Queue();
+            }
+            return instance;
+         }
+      }
+
+      public ConcurrentQueue<Action> WorkQueue = new ConcurrentQueue<Action>();
+      private Patched497Queue()
+      {
+         Task.Factory.StartNew(() =>
+         {
+            Action func;
+            while (true)
+            {
+               if (WorkQueue.TryDequeue(out func))
+               {
+                  try
+                  {
+                     func.Invoke();
+                  }
+                  catch (Exception e)
+                  {
+                     DriverStateBase.serialPort.ClearBuffers();
+                     Telescope.LogMessage("Exception in HBX work queue thread - \n", e.Message);
+                  }
+               }
+               else
+               {
+                  System.Threading.Thread.Sleep(1);
+               }
+            }
+         });
       }
    }
 
@@ -535,25 +536,14 @@ namespace ASCOM.LX90
          return status.Contains("<T>");
       }
 
-      private double lastGoodSiderealTime = 0.0;
       public override double SiderealTime()
       {
-         try
-         {
-            double siderealTime;
-            serialPort.Transmit(":GS#");
-            string sidereal = serialPort.ReceiveTerminated("#").Replace("#", "");
-            int hours = int.Parse(sidereal.Substring(0, 2));
-            int min = int.Parse(sidereal.Substring(3, 2));
-            int sec = int.Parse(sidereal.Substring(6, 2));
-            siderealTime = hours + (min / 60.0) + (sec / 3600.0);
-            lastGoodSiderealTime = siderealTime;
-            return lastGoodSiderealTime;
-         }
-         catch(Exception)
-         {
-            return lastGoodSiderealTime;
-         }
+         serialPort.Transmit(":GS#");
+         string sidereal = serialPort.ReceiveTerminated("#").Replace("#", "");
+         int hours = int.Parse(sidereal.Substring(0, 2));
+         int min = int.Parse(sidereal.Substring(3, 2));
+         int sec = int.Parse(sidereal.Substring(6, 2));
+         return hours + (min / 60.0) + (sec / 3600.0);
       }
 
       public override double SiteLatitude()
@@ -614,25 +604,18 @@ namespace ASCOM.LX90
       public override DateTime UTCDate()
       {
          // Get the mount local time. Add the UTC offset to get UTC time.
-         try
-         {
-            serialPort.Transmit(":GC#");
-            string localDate = serialPort.ReceiveTerminated("#").Replace("#", "");
-            serialPort.Transmit(":GL#");
-            string localTime = serialPort.ReceiveTerminated("#").Replace("#", "");
-            serialPort.Transmit(":GG#");
-            string utcOffset = serialPort.ReceiveTerminated("#").Replace("#", "");
-            DateTime dt = DateTime.Parse(localDate, new CultureInfo("en-US"));
-            dt = dt.AddHours(double.Parse(localTime.Substring(0, 2)))
-               .AddMinutes(double.Parse(localTime.Substring(3, 2)))
-               .AddSeconds(double.Parse(localTime.Substring(6, 2)));
-            DateTimeOffset offset = new DateTimeOffset(dt, new TimeSpan(int.Parse(utcOffset), 0, 0));
-            return offset.DateTime.ToUniversalTime();
-         }
-         catch(Exception)
-         {
-            return DateTime.UtcNow;
-         }
+         serialPort.Transmit(":GC#");
+         string localDate = serialPort.ReceiveTerminated("#").Replace("#", "");
+         serialPort.Transmit(":GL#");
+         string localTime = serialPort.ReceiveTerminated("#").Replace("#", "");
+         serialPort.Transmit(":GG#");
+         string utcOffset = serialPort.ReceiveTerminated("#").Replace("#", "");
+         DateTime dt = DateTime.Parse(localDate, new CultureInfo("en-US"));
+         dt = dt.AddHours(double.Parse(localTime.Substring(0, 2)))
+            .AddMinutes(double.Parse(localTime.Substring(3, 2)))
+            .AddSeconds(double.Parse(localTime.Substring(6, 2)));
+         DateTimeOffset offset = new DateTimeOffset(dt, new TimeSpan(int.Parse(utcOffset), 0, 0));
+         return offset.DateTime.ToUniversalTime();
       }
    }
 
@@ -771,7 +754,7 @@ namespace ASCOM.LX90
          {
             return ":RC#";
          }
-         else if (AxisRates.ratesApproxEqual(rate.Minimum, ASCOM.LX90.AxisRates.SlewThreeDegreePerSec))
+         else if (AxisRates.ratesApproxEqual(rate.Minimum, ASCOM.LX90.AxisRates.SlewHalfDegreePerSec))
          {
             return ":RM#";
          }
