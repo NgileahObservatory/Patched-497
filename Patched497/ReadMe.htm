@@ -21,16 +21,12 @@
 	</STYLE>
 </HEAD>
 <BODY LANG="en-GB" DIR="LTR">
-<TABLE WIDTH=100% BORDER=0 CELLPADDING=4 CELLSPACING=0>
-	<TR>
-		<TD>
-			<H2>ASCOM.LX90.Telescope Driver (C#)</H2>
-		</TD>
-	</TR>
-</TABLE>
-<P><BR><BR>
-</P>
-<H1>The LX90/ETX driver is an in-process (assembly) based driver.</H1>
+<h1>ASCOM.LX90.Telescope Driver (C#)</h1>
+<h2>Purpose of this documentation.</h2>
+This documentation attempts to explain the features peculiar to the driver and the software architecture in the broadest possible terms. If you wish to build the driver and alter
+the source code for yourself, you are directed to the <a href="https://github.com/NgileahObservatory/Patched-497" target="browser">GitHub repository</a> and the ASCOM project documentation for prerequisites
+   (development tools and environment) <a href="http //ascom-standards.org/Developer/DriverImpl.htm" target="browser">ASCOM Driver Development</a>
+<H2>Introduction.</H2>
 Patches are available for Meade #497 handboxes. These add some new capabilities to
 the Meade LX90 and Etx model telescopes. Stock ASCOM drivers know nothing of these
 systems so this driver attempts to make features available via ASCOM that otherwise
@@ -48,7 +44,7 @@ consistently different actual amounts of movement.<br/><br/>
          <li class="list-group-item">
             Guide Rate. Set whatever your guide rate ACTUALLY proves to be here if you can use the Meade Pulse Guide commands or custom guide rate you want if you intend to guide 
             with :RA#/:RE# commands on your mount. See the notes below about using Meade move commands and using this value to scale time at sidereal rate.
-            Experimentally pulse guide ocmmands on my LX90 yields a guide rate 0.5 × Sidereal. If you can only use the Meade move commands at sidereal, this value will be used to
+            Experimentally pulse guide commands on my LX90 yield a guide rate 0.5 × Sidereal. If you can only use the Meade move commands at sidereal, this value will be used to
             scale the time of the sidereal movements such that the mount behaves as if its guide rate is the value you specified here.
          </li><br/>
          <li class="list-group-item">
