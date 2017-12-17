@@ -49,7 +49,7 @@ namespace ASCOM.LX90
          refreshStateData(null, null);
          refreshTimer = new System.Windows.Forms.Timer();
          refreshTimer.Tick += new EventHandler(refreshStateData);
-         refreshTimer.Interval = 2000;
+         refreshTimer.Interval = 5000;
          refreshTimer.Start();
       }
 
