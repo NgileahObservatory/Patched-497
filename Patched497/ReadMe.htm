@@ -42,38 +42,56 @@ E.g. You have critically balanced the scope and equal time slews at sidereal E/W
 consistently different actual amounts of movement.<br/><br/>
 <h2>Setup</h2>
    <p>
-      <img src="docs/DriverSetup.png" align="left" hspace="20" vspace="20"/>
-      <ol>
-         <li>Com port. No searching of ports for a scope is made so set this yourself.</li>
-         <li>
+      <img src="docs/DriverSetup.png"/>
+      <ol class="list-group">
+         <li class="list-group-item">Com port. No searching of ports for a scope is made so set this yourself.</li><br />
+         <li class="list-group-item">
             Guide Rate. Set whatever your guide rate ACTUALLY proves to be here if you can use the Meade Pulse Guide commands or custom guide rate you want if you intend to guide 
             with :RA#/:RE# commands on your mount. See the notes below about using Meade move commands and using this value to scale time at sidereal rate.
             Experimentally pulse guide ocmmands on my LX90 yields a guide rate 0.5 × Sidereal. If you can only use the Meade move commands at sidereal, this value will be used to
             scale the time of the sidereal movements such that the mount behaves as if its guide rate is the value you specified here.
-         </li>
-         <li>
+         </li><br/>
+         <li class="list-group-item">
             This is where you can compensate for asymmetric guide slew performance. You may see this calibrating a guiding program like PHD/2 guiding for example.
             Fundamentally, equal time slewed E/W yields a different distance moved. The value entered here will scale the time of the slew in the direction selected (East/West)
-            such that you should be able to obtain an equal distance slewed over time in each direction. Scale down not up. i.e.
-         </li>
-         <li>
-            Check to indicate that you wish to use the HIGHLY EXPERIMENTAL :RA#/:RE# features of a patched handset. As of this release this behaviour is not really working.
-            Feel free to modify the source code if you can solve the mystery of how these commands are supposed to work!
-         </li>
-         <li>
-            Indicate in which direction a negative value (decimal degrees) should move the mount. i.e. If slewing E with +ve value actually moves W, check the "-ve :RA# moves E" option.
-            Similarly for :RE#.
-         </li>
-         <li>
-            Select how you want to pulse guide.<br/>
-               <i>Pulse guide commands.</i> There is some funkiness around these commands especially if you have changed time zones or similar. I have seen the following behaviour:
-               turn on the mount. Experiment with pulse guiding. Mount moves. Change timezone. Mount no longer responds to pulse guide commands. The problem appears to be a long
-               standing bug in the Meade firmware. The mount can get its local sidereal time thoroughly wrong, toggling the time zone fixes this but can kill pulse guiding. Go figure.<br />
-               <i>:RA#/:RE# at guide rate.</i> Whatever arbitrary guide rate you set, the driver will issue :RA#/:RE# commands at that arbitrary rate.<br />
-               <i>Move commands at sidereal.</i> These are the classic Meade move commands at sidereal scaled by the guide rate. e.g. Specify a guide rate of 0.5 and pulse guide
-               durations requested will be scaled down by 0.5 such at a 1s guide pulse becomes a 0.5s move.<br />
-         </li>
-         <li>
+            such that you should be able to obtain an equal distance slewed over time in each direction. Scale down not up. i.e. Scale such that a shorter guide pulse will move the
+            same distance in the axis that moves greatest in a given time.
+         </li><br />
+         <li class="list-group-item">
+            Check to indicate that you wish to use the HIGHLY EXPERIMENTAL :RA#/:RE# features of a patched handset.
+         </li><br />
+         <li class="list-group-item">
+            Indicate whether L/R or Up/Down reversal is required for the mount to slew in the correct direction for :RA# or :RE# commands. Internally the reality is that the rate is
+            set and :Me#/:Mw# or :Mn#/:Ms# are issued as per normal. The L/R or Up/Down reversal is achieved by changing the sign of the :RA# or :RE# command. E.g. :RA-1.5# followed
+            by :Mw# on my mount will move the mount at 1.5 degrees/sec W and correspondingly, :RA-1.5# followed by :Me# will move E at 1.5 degrees/sec. In that example, I need to always
+            negate the rate for slews to move in the correct direction. Experiment with your mount. Make sure you have set any date/time, location, timezone, etc. you need to first.
+            It turns out these can determine which reversals are required. Best do the necessary the first time than discover your mount going the wrong direction later.
+         </li><br />
+         <li class="list-group-item">
+            Select how you want to pulse guide. This is also where the asymmetric guiding correction coefficient (overly fancy name for "fudge factor")
+            is used to further scale the duration of the actual time spent moving in the given guide direction. Pulse guiding is not optional. Three algorithms are provided:<br /><br/>
+            <ul class="list-group">
+            <li class="list-group-item"><i>Pulse guide commands.</i> Meade pulse guide commands are issued. On my LX90 these move the scope at an offset from sidereal of ± 0.5 × sidereal rate.
+            i.e. The motor is always driving W, never stopped.
+            Note, there is some funkiness around these commands especially if you have changed time zones or similar. I have seen the following behaviour:
+            turn on the mount. Experiment with pulse guiding. Mount moves. Change timezone. Mount no longer responds to pulse guide commands. The problem appears to be a long
+            standing bug in the Meade firmware. The mount can get its local sidereal time thoroughly wrong, toggling the time zone fixes this but can kill pulse guiding. Go figure.</li><br />
+            <li class="list-group-item"><i>:RA#/:RE# at guide rate.</i> The driver issues the command to move the mount and to stop the slew in the direction requested when the pulse guide time
+            is elapsed. Whatever arbitrary guide rate you set, the driver will issue :RA#/:RE# commands at that arbitrary rate. Experimentally using PHD/2
+            and a guide pulse of 5000ms the following are the results at different guide rates:
+            <ul class="list-group">
+               <li class="list-group-item">1.0 × sidereal rate shows movement of 5 sidereal seconds (5 sec in RA). This is like the "Move commands at sidereal" below.</li>
+               <li class="list-group-item">0.5 × sidereal rate shows between 2 and 3 sidereal seconds (2-3 sec in RA). i.e. Guiding is moving the scope at an offset from sidereal of ± 0.5 × sidereal rate.</li>
+               <li class="list-group-item">0.25 × sidereal rate shows movement of approximately 1 sidereal seconds (1 sec in RA). i.e. Guiding is moving the scope at an offset from sidereal of ± 0.25 × sidereal rate.</li>
+            </ul>
+            </li><br />
+            <li class="list-group-item"><i>Move commands at sidereal.</i> On my LX90 these move the scope at an offset from sidereal of ± 1.0 × sidereal rate. i.e. Guide W = 2 × sidereal. Guide E = motor stopped.
+            The driver issues the command to move the mount and to stop the slew in the direction requested when the pulse guide time
+            is elapsed. These are the classic Meade move commands at sidereal scaled by the guide rate. e.g. Specify a guide rate of 0.5 and pulse guide
+            durations requested will be scaled by 0.5 such at a 1s guide pulse becomes a 0.5s move.<br /></li>
+               </ul>
+         </li><br />
+         <li class="list-group-item">
             Focal length, aperture, secondary diameter and site elevation are required by ASCOM but not obtained from the mount. These are static values and should match your
             mount, OTA and site location.
          </li>
