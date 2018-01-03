@@ -976,7 +976,7 @@ namespace ASCOM.LX90
             }
             else
             {
-               DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.StopMoveAxis(Axis);
+               DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.ResumeTracking(Axis);
             }
          });
          Patched497Queue.Instance.WorkQueue.Enqueue(() => slewTask.RunSynchronously());

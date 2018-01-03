@@ -93,7 +93,7 @@ namespace ASCOM.LX90
       {
          return this;
       }
-      public virtual DriverStateBase SlewComplete()
+      public virtual DriverStateBase ResumeTracking()
       {
          return this;
       }
@@ -117,15 +117,11 @@ namespace ASCOM.LX90
       {
          return this;
       }
-      internal virtual DriverStateBase InternalStopMoveAxis()   
+      internal virtual DriverStateBase InternalResumeTracking()   
       {
          return this;
       }
-      public virtual DriverStateBase StopMoveAxis()
-      {
-         return this;
-      }
-      public virtual DriverStateBase StopMoveAxis(TelescopeAxes axis)
+      public virtual DriverStateBase ResumeTracking(TelescopeAxes axis)
       {
          return this;
       }
@@ -178,10 +174,6 @@ namespace ASCOM.LX90
          return this;
       }
       public virtual DriverStateBase SyncToCoordinates(double RA, double Dec)
-      {
-         return this;
-      }
-      public virtual DriverStateBase ResumeTracking()
       {
          return this;
       }
@@ -704,7 +696,7 @@ namespace ASCOM.LX90
    /// Encapsulates SlewToAltAz(...) and SlewToCoordinates(...) type slewing where both
    /// axes act in unison. It takes over the two axes by setting itself as the state for both.
    ///    DualAxisSlewingState->AbortSlew()->Tracking and SecondaryAxisTrackingState.
-   ///    DualAxisSlewingState->SlewComplete()->Tracking and SecondaryAxisTrackingState.
+   ///    DualAxisSlewingState->ResumeTracking()->Tracking and SecondaryAxisTrackingState.
    /// </summary>
    public abstract class DualAxisSlewingState : ScopeMovingState
    {
@@ -728,9 +720,9 @@ namespace ASCOM.LX90
          // Dual axis slew so kill slews in both axes.
          serialPort.Transmit(":Q#");
 
-         return SlewComplete();
+         return ResumeTracking();
       }
-      public override DriverStateBase SlewComplete()
+      public override DriverStateBase ResumeTracking()
       {
          SecondaryAxisCurrentState = SecondaryAxisState.ResumeTracking();
          return SavedAxisState.ResumeTracking();
@@ -850,22 +842,22 @@ namespace ASCOM.LX90
       /// <summary>
       /// As a master state. We can route this to the correct axis.
       /// </summary>
-      public override DriverStateBase StopMoveAxis(TelescopeAxes Axis)
+      public override DriverStateBase ResumeTracking(TelescopeAxes Axis)
       {
          // Worst that can happen is we return this.
          if (Axis == TelescopeAxes.axisTertiary)
          {
             throw new ASCOM.InvalidValueException("Tertiary axis is not supported.");
          }
-         // InternalStopMoveAxis so we can't infinitely recurse to death.
-         return MoveAxisHelper.MoveAxisStateFor(Axis).InternalStopMoveAxis();
+         // InternalResumeTracking so we can't infinitely recurse to death.
+         return MoveAxisHelper.MoveAxisStateFor(Axis).InternalResumeTracking();
       }
 
-      public override DriverStateBase StopMoveAxis()
+      public override DriverStateBase ResumeTracking()
       {
-         return InternalStopMoveAxis();
+         return InternalResumeTracking();
       }
-      internal override DriverStateBase InternalStopMoveAxis()
+      internal override DriverStateBase InternalResumeTracking()
       {
          // Looks like AbortSlew is all that is required.
          return AbortSlew();
@@ -910,11 +902,11 @@ namespace ASCOM.LX90
          // current slew task should exit.
          return SavedAxisState.ResumeTracking();
       }
-      public override DriverStateBase StopMoveAxis()
+      public override DriverStateBase ResumeTracking()
       {
-         return InternalStopMoveAxis();
+         return InternalResumeTracking();
       }
-      internal override DriverStateBase InternalStopMoveAxis()
+      internal override DriverStateBase InternalResumeTracking()
       {
          // Looks like AbortSlew is all that is required.
          return AbortSlew();
@@ -1204,7 +1196,7 @@ namespace ASCOM.LX90
    /// Valid state transitions are those of DualAxisSlewingState.
    /// 
    /// The mount is polled in a lazy worker thread so that we don't prematurely return
-   /// false for Slewing(). i.e. When the HW returns not polling, we call SlewComplete().
+   /// false for Slewing(). i.e. When the HW returns not polling, we call ResumeTracking().
    /// 
    /// Otherwise AbortSlew() will return us to a tracking state on both axes.
    /// </summary>
@@ -1264,7 +1256,7 @@ namespace ASCOM.LX90
                   Patched497Queue.Instance.WorkQueue.Enqueue(() => 
                      // If still the expected state, then this returns all the
                      // axes states to what they were before we kicked off the slew.
-                     CurrentState = MasterCurrentState.SlewComplete());
+                     CurrentState = MasterCurrentState.ResumeTracking());
                   return true;
                }
                catch (System.OperationCanceledException)
@@ -1295,7 +1287,7 @@ namespace ASCOM.LX90
    /// Valid state transitions are those of DualAxisSlewingState.
    /// 
    /// The mount is polled in a lazy worker thread so that we don't prematurely return
-   /// false for Slewing(). i.e. When the HW returns not polling, we call SlewComplete().
+   /// false for Slewing(). i.e. When the HW returns not polling, we call ResumeTracking().
    /// 
    /// Otherwise AbortSlew() will return us to a tracking state on both axes.
    /// </summary>
@@ -1356,7 +1348,7 @@ namespace ASCOM.LX90
                   Patched497Queue.Instance.WorkQueue.Enqueue(() =>
                      // If still the expected state, then this returns all the
                      // axes states to what they were before we kicked off the slew.
-                     CurrentState = MasterCurrentState.SlewComplete());
+                     CurrentState = MasterCurrentState.ResumeTracking());
                   return true;
                }
                catch (System.OperationCanceledException)
@@ -1422,15 +1414,15 @@ namespace ASCOM.LX90
       /// axis might be and if this is the MasterCurrentState it needs to 
       /// pass on the request to the other axis.
       /// </summary>
-      public override DriverStateBase StopMoveAxis(TelescopeAxes Axis)
+      public override DriverStateBase ResumeTracking(TelescopeAxes Axis)
       {
          // Worst that can happen is we return this.
          if (Axis == TelescopeAxes.axisTertiary)
          {
             throw new ASCOM.InvalidValueException("Tertiary axis is not supported.");
          }
-         // InternalStopMoveAxis so we can't infinitely recurse to death.
-         return MoveAxisHelper.MoveAxisStateFor(Axis).InternalStopMoveAxis();
+         // InternalResumeTracking so we can't infinitely recurse to death.
+         return MoveAxisHelper.MoveAxisStateFor(Axis).InternalResumeTracking();
       }
 
       /// <summary>
