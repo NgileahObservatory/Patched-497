@@ -120,6 +120,7 @@
     </None>
     <Content Include="ASCOM.ico" />
     <Content Include="ReadMe.htm" />
+    <None Include="README.md" />
     <None Include="Resources\ASCOM.bmp" />
   </ItemGroup>
   <ItemGroup>
