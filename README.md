@@ -22,5 +22,28 @@ Documentation specific to this driver is found in the provided Readme.htm and co
 
 The code should generally be thought of as highly experimental. The only test systems available to the developer (me) are a circa 2007 12" LX90 LNT, and a similarly aged ETX 125.
 
+## ASCOM Telescope Interface.
 
+The ASCOM.LX90.Telescope driver exposes the <a href="http://www.ascom-standards.org/Help/Platform/html/T_ASCOM_DeviceInterface_ITelescopeV3.htm" target="browser">ASCOM ITelescopeV3 interface.</a>
+
+## Software Architecture.
+
+The driver is implemented as a GoF State Pattern. State transition diagrams are provided in the docs/ directory.
+
+In summary, there is a single thread managing a thread safe queue of tasks. The tasks are anything that talks to the mount. Tasks are queued and the queue is serviced. The GoF State pattern
+ensures that only tasks that are legal for the current state are performed. All other tasks are no-ops.
+
+The telescope axes are managed by independent states. When slewing to a location (Alt/Az or RA/Dec) the axes are set to a single "DualAxisSlewingState" subclass. For individual axis movements
+such as pulse guiding or moving the axis by an ASCOM.Telescope MoveAxis call, each axis has its own independent state.
+
+Correct combinations of states are enforced across axes. 
+
+E.g. 
+
+ 1. PrimaryAxis in TrackingState and SecondaryAxis in Tracking State.
+ 2. Either axis in TrackingState and the other axis in PulseGuiding...State.
+ 3. Either axis in TrackingState and the other axis in Move...SlewingState.
+ 4. Both axes in pulse guiding state.
+ 5. Both axes in Move...SlewingState.
+ 6. DualAxisSlewingState (SlewingToAltAzState or SlewingToCoordinatesState).
 
