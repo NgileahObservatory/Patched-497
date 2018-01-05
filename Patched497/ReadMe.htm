@@ -109,12 +109,31 @@ pulse guiding whilst slewing or some similarly nonsensical driving of the mount.
 State transition diagrams are provided for guidance.<br /><br />
 Additionally, ASCOM has its own protocol and to work properly as an ASCOM driver, we must conform to the expectations of the ASCOM.Telescope interface. The state machine
 enforces the expectations of the interface.
-<h3>Slew to coordinates (Celestial or Alt/Az) state machine.</h3>
+<h3>Overview</h3>
+   <img src="docs/Overview.png" /><br /><br />
+Client applications work with the ASCOM ITelescopeV3 interface. In reality this queues tasks to the single point of communications with the mount. State changes are atomic. Only the task
+   executing in the worker thread can change the state. Instances of the state classes (see the class diagram) provide the state changing operations that a task may call. If an operation
+   is invalid for a particular state, it is simply a no-op. i.e. The default method on DriverStateBase is called because the state for which the operation is invalid does not override
+   that method. Thus, as an example, if the current state is a DualAxisSlewingState and a task requests an E pulse guide, the task will call the PulseGuideEast(...) method on the DualAxisSlewingState
+   and as the DualAxisSlewingState does not support pulse guiding, the no-op implementation on DriverStateBase is called and invalid operation of the mount is prevented.<br /><br />
+Care must be taken at all times to only change axis states in the worker thread, to do so atomically, and to never attempt serial comms to the mount anywhere else.
+<h3>Mount control states.</h3>
+   Broadly speaking there are three types of mount movement on the ASCOM ITelescopeV3 interface.
+   <ul>
+      <li>Slewing to coordinates. Alt/Az or Celestial.</li>
+      <li>Arbitrary movement started and stopped by the client.</li>
+      <li>Guiding. Arbitrary movement for a specified duration in milliseconds specified in the client's request.</li>
+   </ul>
+   The state transitions are enforced as are the valid operations for each mount movement state. In all cases, and abort slew is possible and this will return the mount to a tracking state.
+   In the diagrams below, example ASCOM properties and what to expect them to indicate are provided by way of illustration.
+<h4>Slew to coordinates (Celestial or Alt/Az) state machine.</h4>
 <img src="docs/SlewStateMachine.png" /><br /><br />
-<h3>Arbitrary move of axis/axes state machine.</h3>
+<h4>Arbitrary move of axis/axes state machine.</h4>
 <img src="docs/MoveAxisStateMachine.png" /><br /><br />
-<h3>Pulse guiding state machine.</h3>
+<h4>Pulse guiding state machine.</h4>
 <img src="docs/PulseGuidingStateMachine.png" /><br /><br />
+<h3>Class Diagram</h3>
+   <img src="docs/ClassDiagram.png" /><br /><br />
 <HR>
 <DIV ALIGN=RIGHT>
 	<TABLE WIDTH=100% BORDER=0 CELLPADDING=4 CELLSPACING=0>

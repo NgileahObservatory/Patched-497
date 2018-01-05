@@ -43,13 +43,34 @@ namespace ASCOM.LX90
    /// </summary>
    public abstract class DriverStateBase
    {
-      // Master as in all connect, disconnect start here.
+      /// <summary>
+      /// The master current state is always set once the driver is created.
+      /// It represents the main interface generally and for the primary axis specifically.
+      /// It can have a state that represents the primary axis, or dual axes.
+      /// E.g. SiderealTrackingState is it's default.
+      ///      SlewPrimaryAxisState is a state that controls just the primary axis.
+      ///      SlewToCoordinatesState is a state that controls both axes.
+      /// </summary>
       public static DriverStateBase MasterCurrentState = null;
-      // Secondary axis for independent axis slewing and guiding.
+      /// <summary>
+      /// The SecondaryAxisCurrentState is set to SecondaryAxisTrackingState by default.
+      /// It represents a secondary interface to control the secondary axis.
+      /// Provided preconditions are met (see the state transition diagrams in the docs)
+      /// it can be set to SlewSecondaryAxisState or PulseGuideSecondaryAxisState from
+      /// the SecondaryAxisTrackingState.
+      /// For dual axis movement, SlewToAltAzState and SlewToCoordinatesState is is set to 
+      /// the same state as teh MasterCurrentState. Thus any call on it will call the correct
+      /// state transitioning operation on the DualAxisMovingState.
+      /// </summary>
       public static DriverStateBase SecondaryAxisCurrentState = null;
 
-      // Property setting understands whether the state applies to a single axis
-      // or dual axes.
+      /// <summary>
+      /// Property setting understands whether the state applies to a single axis
+      /// or dual axes.
+      /// 
+      /// The basic idea is you can just set CurrentState with the state you want and it
+      /// enforces the rules around whether that state can only be applied to a specific axis.
+      /// </summary>
       public static DriverStateBase CurrentState
       {
          set
@@ -81,102 +102,240 @@ namespace ASCOM.LX90
       {
          utilities = new Util();
       }
+
+      /// <summary>
+      /// All the methods in this region are responsible for a state transition.
+      /// Derived classes override ONLY those operations and state transitioning methods
+      /// that are valid for the state they represent.
+      /// 
+      /// Thus any request for an invalid operation on a given state calls the base class
+      /// method which returns this - the instance of the existing state instead of a new
+      /// state and no state transition occurs nor any inavlid operation for the given state.
+      /// 
+      /// All state transition operations MUST be only called from a task queued to the MountTaskHandler.WorkQueue.
+      /// This is thread safe. The state transitioning task is performed ONLY in the MountTaskHandler worker thread.
+      /// </summary>
+      #region DefaultStateTransitioningMethods
+      
+      /// <summary>
+      /// Connect to the provided port. Overrides return the next state on
+      /// successful connection.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase Connect(int Port)
       {
          return this;
       }
+      /// <summary>
+      /// Disconnect from the mount. Overrides return the next state on 
+      /// successful disconnection.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase Disconnect()
       {
          return this;
       }
+      /// <summary>
+      /// Park the telesdcope and disconnect from the mount. Overrides return the next state on 
+      /// successful park.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase Park()
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should issue the commands necessary to ensure the mount is tracking.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase ResumeTracking()
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the relevent Slew...AxisState after issuing the commands
+      /// to the mount to do so.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       internal virtual DriverStateBase MoveAxisNorth(Rate rate)
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the relevent Slew...AxisState after issuing the commands
+      /// to the mount to do so.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       internal virtual DriverStateBase MoveAxisSouth(Rate rate)
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the relevent Slew...AxisState after issuing the commands
+      /// to the mount to do so.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       internal virtual DriverStateBase MoveAxisEast(Rate rate)
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the relevent Slew...AxisState after issuing the commands
+      /// to the mount to do so.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       internal virtual DriverStateBase MoveAxisWest(Rate rate)
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the result of MoveAxis...North/South/East/West based upon axis
+      /// and +ve or -ve rate.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase MoveAxis(TelescopeAxes Axis, double rate)
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the result of a request to resume tracking. This is for 
+      /// use in this class hierachy only. i.e. It is not publically exposed to the client.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       internal virtual DriverStateBase InternalResumeTracking()   
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the result of InternalResumeTracking from the state representing
+      /// the provided axis.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase ResumeTracking(TelescopeAxes axis)
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the relevent PulseGuide...AxisState after issuing the commands
+      /// to the mount to do so.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       internal virtual DriverStateBase PulseGuideNorth(int durationMs)
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the relevent PulseGuide...AxisState after issuing the commands
+      /// to the mount to do so.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       internal virtual DriverStateBase PulseGuideSouth(int durationMs)
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the relevent PulseGuide...AxisState after issuing the commands
+      /// to the mount to do so.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       internal virtual DriverStateBase PulseGuideEast(int durationMs)
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the relevent PulseGuide...AxisState after issuing the commands
+      /// to the mount to do so.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       internal virtual DriverStateBase PulseGuideWest(int durationMs)
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the result of PulseGuide...North/South/East/West based the given Direction.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase PulseGuide(GuideDirections Direction, int Duration)
       {
          return this;
       }
+      /// <summary>
+      /// To ensure that IsPulseGuiding on the driver returns true for the duration (ms) of a pulse guide
+      /// we run a cancellable task for the expected duration of the pulse guide that calls this method
+      /// when the duration has elapsed. Thus a client can ask if the axis is still pulse guiding in the absence
+      /// of the mount providing the ability to determine this.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       internal virtual DriverStateBase InternalPulseGuideComplete()
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the axes to their tracking states after stopping all slewing.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase AbortSlew()
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the issue the commands for sidereal tracking to the mount and return SiderealTrackingState if it is valid for the axis. 
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase TrackSidereal()
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should return the issue the commands for lunar tracking to the mount and return  the LunarTrackingState if it is valid for the axis. 
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase TrackLunar()
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should issue the commands to slew to the Alt/Az and return the DualAxisMovingState SlewToAltAzState if that state transition is valid.
+      /// Interruption is by AbortSlew().
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase SlewToAltAzAsync(double Azimuth, double Altitude)
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should issue the commands to slew to the celestial coordinates and return the DualAxisMovingState SlewToCoordinatesState if that state transition is valid.
+      /// Interruption is by AbortSlew().
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase SlewToCoordinatesAsync(double RightAscension, double Declination)
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should issue the commands to sync the mount to the given Alt/Az. This is in all likelihood valid on any connected state.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase SyncToAltAz(double Az, double Alt)
       {
          return this;
       }
+      /// <summary>
+      /// Overrides should issue the commands to sync the mount to the given celestial coordinates. This is in all likelihood valid on any connected state.
+      /// </summary>
+      /// <returns>Existing state - no-op.</returns>
       public virtual DriverStateBase SyncToCoordinates(double RA, double Dec)
       {
          return this;
       }
+      #endregion
+
+      /// <summary>
+      /// These methods largely exist to avoid slower means (polymorphic cast) of determining whether a current state represents a particular condition of the mount.
+      /// Individual derived classes should only override and return true for the exact methods below that correspond to the state they represent for the mount.
+      /// </summary>
+      #region DefaultStateInterrogationMethods
+
       public virtual bool IsParked() { return false; }
       internal virtual bool InternalIsSlewing() { return false; }
       public virtual bool IsSlewing() { return InternalIsSlewing(); }
@@ -187,11 +346,25 @@ namespace ASCOM.LX90
       public virtual bool IsTracking() { return false; }
       public virtual bool IsTrackingSidereal() { return false; }
       public virtual bool IsTrackingLunar() { return false; }
-      // What does the mount say about its slewing state?
+      /// <summary>
+      /// This is used in DualAxisMovingState subclasses to poll the mount and determine automatically when
+      /// the mount says the slew is complete.
+      /// 
+      /// This default returns false. Overrides should interrogate the mount as required.
+      /// </summary>
+      /// <returns>false</returns>
       internal virtual bool InternalIsHwSlewing() { return false; }
       public virtual bool IsDualAxisState() { return !IsPrimaryAxisState() && !IsSecondaryAxisState(); }
       public virtual bool IsPrimaryAxisState() { return false; }
       public virtual bool IsSecondaryAxisState() { return false; }
+      
+      #endregion
+
+      /// <summary>
+      /// The methods found here should be overriden by all connected states. They allow the mount to be interrogated
+      /// for its values for the given property requested.
+      /// </summary>
+      #region ConnectedStateMethods
 
       public virtual AlignmentModes AlignmentMode()
       {
@@ -257,6 +430,8 @@ namespace ASCOM.LX90
       {
          throw new ASCOM.NotConnectedException("Attempted to get UTC date of disconnected mount.");
       }
+
+      #endregion
    }
 
    /// <summary>
@@ -266,23 +441,33 @@ namespace ASCOM.LX90
    /// prevents all manner of invalid state transitions or operations invalid
    /// on any given state.
    /// </summary>
-   public class Patched497Queue
+   public class MountTaskHandler
    {
-      private static Patched497Queue instance = null;
-      public static Patched497Queue Instance
+      private static MountTaskHandler instance = null;
+      /// <summary>
+      /// This property ensures that MountTaskHandler is a singleton. There can be only one.
+      /// </summary>
+      public static MountTaskHandler Instance
       {
          get
          {
             if (instance == null)
             {
-               instance = new Patched497Queue();
+               instance = new MountTaskHandler();
             }
             return instance;
          }
       }
 
+      /// <summary>
+      /// Thread safe queue of tasks requested of the mount.
+      /// </summary>
       public ConcurrentQueue<Action> WorkQueue = new ConcurrentQueue<Action>();
-      private Patched497Queue()
+
+      /// <summary>
+      /// Worker thread in effect that invokes the queued task otherwise sleeps.
+      /// </summary>
+      private MountTaskHandler()
       {
          Task.Factory.StartNew(() =>
          {
@@ -297,6 +482,10 @@ namespace ASCOM.LX90
                   }
                   catch (Exception e)
                   {
+                     // If the requested task throws an exception, we clear the serial port. Testing has shown
+                     // that things go bad if the port receive queue has flotsom left over from some failed task
+                     // and you request something new be done. i.e. The new task gets fed leftovers from the previous
+                     // task.
                      DriverStateBase.serialPort.ClearBuffers();
                      Telescope.LogMessage("Exception in HBX work queue thread - \n", e.Message);
                   }
@@ -330,6 +519,7 @@ namespace ASCOM.LX90
          string trackingRateStr = serialPort.ReceiveTerminated("#").Replace("#", "");
          double trackingRate = double.Parse(trackingRateStr);
          // From what I can see, some fuzziness needs to be applied.
+         // Here we ensure our TrackingState matches the mount.
          if (trackingRate > 58 && trackingRate < 62)
          {
             return new SiderealTrackingState();
@@ -381,12 +571,15 @@ namespace ASCOM.LX90
             serialPort.Transmit(":Q#");
 
             // Now kick off tracking.
+            // This checks the tracking rate of the mount to ensure we start out with the tracking
+            // rate that matches what the mount says. i.e. Lunar or Sidereal.
             MasterCurrentState = TrackingStateHelper.TrackingStateForMount(serialPort);
             SecondaryAxisCurrentState = new SecondaryAxisTrackingState();
             return MasterCurrentState;
          }
          catch(Exception e)
          {
+            // Put the serial port back to disconnected and requiring reinitialisation.
             if (serialPort != null)
             {
                serialPort.Connected = false;
@@ -394,7 +587,6 @@ namespace ASCOM.LX90
                serialPort = null;
             }
             throw e;
-            //return this;
          }
       }
    }
@@ -402,7 +594,7 @@ namespace ASCOM.LX90
    /// <summary>
    /// ParkedState is a special disconnected state. IsParked() will always return true.
    /// Valid state transitions:
-   ///    ParkedState->Connect(Port)->TrackingState on both axes.
+   ///    ParkedState->Connect(Port)->TrackingState on both axes. ONLY if the mount has been powered off/on again.
    /// </summary>
    public class ParkedState : DisconnectedState
    {
@@ -418,6 +610,10 @@ namespace ASCOM.LX90
    /// </summary>
    public abstract partial class ConnectedState : DriverStateBase
    {
+      /// <summary>
+      /// Override of Disconnect that disconnects the serial port.
+      /// </summary>
+      /// <returns>DisconnectedState. Mount is not parked and left as it was.</returns>
       public override DriverStateBase Disconnect()
       {
          if (serialPort != null)
@@ -430,6 +626,10 @@ namespace ASCOM.LX90
          return new DisconnectedState();
       }
 
+      /// <summary>
+      /// Override of Park that parks the mount and disconnects the serial port.
+      /// </summary>
+      /// <returns>ParkedState. To reconnect the mount will have to be switched off and on again.</returns>
       public override DriverStateBase Park()
       {
          // Safe noop if we are not slewing.
@@ -446,9 +646,17 @@ namespace ASCOM.LX90
          return new ParkedState();
       }
 
+      /// <summary>
+      /// If anyone asks, we are connected.
+      /// </summary>
+      /// <returns>Always true.</returns>
       public override bool IsConnected() { return true; }
 
-      // Any connected state can tell you about mount position, date, time, etc.
+      /// <summary>
+      /// Any connected state can tell you about mount position, date, time, etc.
+      /// </summary>
+      #region ConnectedStateMethodOverrides
+
       public override AlignmentModes AlignmentMode()
       {
          serialPort.Transmit(":GW#");
@@ -509,8 +717,11 @@ namespace ASCOM.LX90
          return utilities.HMSToHours(ra);
       }
 
-      // Let any connected state ask if the mount is REALLY slewing or not.
-      // Only ever call from somewhere already in the Patched497Queue.
+      /// <summary>
+      /// Let any connected state ask if the mount is REALLY slewing or not.
+      /// Only ever call from somewhere already in the MountTaskHandler worker thread.
+      /// </summary>
+      /// <returns>true if the mount reports that it is slewing.</returns>
       internal override bool InternalIsHwSlewing()
       {
          serialPort.Transmit(":D#");
@@ -520,7 +731,7 @@ namespace ASCOM.LX90
       }
 
       // Let any connected state ask if the mount is REALLY slewing or not.
-      // Only ever call from somewhere already in the Patched497Queue.
+      // Only ever call from somewhere already in the MountTaskHandler worker thread.
       internal override bool InternalIsHwTracking()
       {
          serialPort.Transmit(":GW#");
@@ -554,7 +765,7 @@ namespace ASCOM.LX90
          serialPort.Transmit(":St" + utilities.DegreesToDM(newLat, "*", "") + "#");
          byte[] result = serialPort.ReceiveCountedBinary(1);
          // Is it a flag or a char? Allow for either.
-         if (result[0] != 1 && !result.ToString().Equals("1"))
+         if (result[0] != '1')
          {
             throw new ASCOM.InvalidValueException("Mount did not accept " + newLat.ToString() + "(" + utilities.DegreesToDM(newLat, "*", "") + ") as a valid latitude.");
          }
@@ -575,24 +786,37 @@ namespace ASCOM.LX90
          serialPort.Transmit(":Sg" + utilities.DegreesToDM(newLon, "°", "") + "#");
          byte[] result = serialPort.ReceiveCountedBinary(1);
          // Is it a flag or a char? Allow for either.
-         if (result[0] != 1 && !result.ToString().Equals("1"))
+         if (result[0] != '1')
          {
             throw new ASCOM.InvalidValueException("Mount did not accept " + newLon.ToString() + "(" + utilities.DegreesToDM(newLon, "*", "") + ") as a valid longitude.");
          }
       }
+      #endregion
 
+      /// <summary>
+      /// If told, arbitraily stop any slewing and track lunar.
+      /// </summary>
+      /// <returns>LunarTrackingState.</returns>
       public override DriverStateBase TrackLunar()
       {
          AbortSlew();
          return new LunarTrackingState();
       }
 
+      /// <summary>
+      /// If told, arbitraily stop any slewing and track sidereal.
+      /// </summary>
+      /// <returns>SiderealTrackingState.</returns>
       public override DriverStateBase TrackSidereal()
       {
          AbortSlew();
          return new SiderealTrackingState();
       }
 
+      /// <summary>
+      /// Get the UTC date from the mount.
+      /// </summary>
+      /// <returns>DateTime that is the UTC date.</returns>
       public override DateTime UTCDate()
       {
          // Get the mount local time. Add the UTC offset to get UTC time.
@@ -614,13 +838,23 @@ namespace ASCOM.LX90
    /// <summary>
    /// Represents any state where we are moving the scope but not tracking. i.e. Slew, pulse guide, etc.
    /// Valid state transitions are:
-   ///    ScopeMovingState->ResumeTracking()->TrackingState/SecondaryAxisTrackingState
+   ///    AxisMovingState->ResumeTracking()->Sidereal/Lunar TrackingState/SecondaryAxisTrackingState
    /// </summary>
-   public abstract class ScopeMovingState : ConnectedState
+   public abstract class AxisMovingState : ConnectedState
    {
-      protected DriverStateBase SavedAxisState = null; // So we can return to tracking/quiet state easily.
-      internal Task<bool> HandleToCurrentScopeMoveTask = null; // So we can have a simple way of doing different slews.
-      private CancellationTokenSource scopeMovementCancellationTokenSource = null; // So we can signal cancellation of slews to HandleToCurrentSlewTask.
+      /// <summary>
+      /// This is the state we have replaced and the state we should return to when done.
+      /// On any completion ResumeTracking() should be returned from this state.
+      /// </summary>
+      protected DriverStateBase SavedAxisState = null;
+      /// <summary>
+      /// This allows us to communicate with the task that is launched in the worker thread. And to determine that the task still exists.
+      /// </summary>
+      internal Task<bool> HandleToCurrentScopeMoveTask = null;
+      /// <summary>
+      /// This is a signal primitive that the task when executing in the worker thread will check for a request that the task be cancelled.
+      /// </summary>
+      private CancellationTokenSource scopeMovementCancellationTokenSource = null;
       protected CancellationTokenSource ScopeMovementCancellationTokenSource
       {
          get
@@ -648,18 +882,30 @@ namespace ASCOM.LX90
             HandleToCurrentScopeMoveTask = null;
          }
       }
+
+      /// <summary>
+      /// If our ResumeTracking is called we are being told to return to our saved axis state and it should resume tracking.
+      /// i.e. LunarTrackingState might like to issue commands for lunar tracking to be on the safe side, likewise sidereal tracking.
+      /// </summary>
+      /// <returns>The result of resuming tracking on the SavedAxisState.</returns>
       public override DriverStateBase ResumeTracking()
       {
          return SavedAxisState.ResumeTracking();
       }
 
-      // This is kind of weird because axes can act independently but we report slewing as a global thing.
+      /// <summary>
+      /// ASCOM has a Slewing property so regardless of axis, we can only report that something somewhere is slewing.
+      /// </summary>
+      /// <returns>true if either axis is slewing.</returns>
       public override bool IsSlewing() 
       {
          return MasterCurrentState.InternalIsSlewing() || SecondaryAxisCurrentState.InternalIsSlewing();
       }
 
-      // This is kind of weird because axes can act independently but we report pulse guiding as a global thing.
+      /// <summary>
+      /// ASCOM has a IsPulseGuiding() method so regardless of axis, we can only report that something somewhere is pulse guiding.
+      /// </summary>
+      /// <returns>true if either axis is pulse guiding.</returns>
       public override bool IsPulseGuiding()
       {
          return MasterCurrentState.InternalIsPulseGuiding() || SecondaryAxisCurrentState.InternalIsPulseGuiding();
@@ -670,7 +916,7 @@ namespace ASCOM.LX90
    /// Moving state on the primary axis that saves away the MasterCurrentState as the 
    /// state to return to when ResumeTracking() is called.
    /// </summary>
-   public abstract class PrimaryAxisMovingState : ScopeMovingState
+   public abstract class PrimaryAxisMovingState : AxisMovingState
    {
       public PrimaryAxisMovingState()
       {
@@ -683,7 +929,7 @@ namespace ASCOM.LX90
    /// Moving state on the secondary axis that saves away the SeconaryAxisCurrentState as the 
    /// state to return to when ResumeTracking() is called.
    /// </summary>
-   public abstract class SecondaryAxisMovingState : ScopeMovingState
+   public abstract class SecondaryAxisMovingState : AxisMovingState
    {
       public SecondaryAxisMovingState()
       {
@@ -695,14 +941,20 @@ namespace ASCOM.LX90
    /// <summary>
    /// Encapsulates SlewToAltAz(...) and SlewToCoordinates(...) type slewing where both
    /// axes act in unison. It takes over the two axes by setting itself as the state for both.
-   ///    DualAxisSlewingState->AbortSlew()->Tracking and SecondaryAxisTrackingState.
-   ///    DualAxisSlewingState->ResumeTracking()->Tracking and SecondaryAxisTrackingState.
+   ///    DualAxisSlewingState->AbortSlew()->Sidereal/Lunar Tracking and SecondaryAxisTrackingState.
+   ///    DualAxisSlewingState->ResumeTracking()->Sidereal/Lunar Tracking and SecondaryAxisTrackingState.
    /// </summary>
-   public abstract class DualAxisSlewingState : ScopeMovingState
+   public abstract class DualAxisSlewingState : AxisMovingState
    {
       internal override bool InternalIsSlewing() { return true; }
-      // Need to preserve the secondary axis state too.
+      /// <summary>
+      /// Need to preserve the secondary axis state too.
+      /// </summary>
       private DriverStateBase SecondaryAxisState;
+
+      /// <summary>
+      /// Store away both axes states for restoration when done.
+      /// </summary>
       public DualAxisSlewingState()
       {
          SavedAxisState = MasterCurrentState;
@@ -710,6 +962,11 @@ namespace ASCOM.LX90
          // We will occupy both axes... we're greedy like that.
          SecondaryAxisCurrentState = this;
       }
+
+      /// <summary>
+      /// Special abort slew that stops all slewing and returns us to the saved axis states.
+      /// </summary>
+      /// <returns></returns>
       public override DriverStateBase AbortSlew()
       {
          if (HandleToCurrentScopeMoveTask != null)
@@ -722,6 +979,12 @@ namespace ASCOM.LX90
 
          return ResumeTracking();
       }
+
+      /// <summary>
+      /// Override of resume tracking that calls ResumeTracking() on both axes.
+      /// </summary>
+      /// <returns>The SavedAxisState for the primary axis. i.e. The master state.</returns>
+      /// <sideeffect>Also restores the SecondaryAxisCurrentState.</sideeffect>
       public override DriverStateBase ResumeTracking()
       {
          SecondaryAxisCurrentState = SecondaryAxisState.ResumeTracking();
@@ -772,8 +1035,10 @@ namespace ASCOM.LX90
          }
       }
 
-      // State the telescope slewing at the axis current set slew rate.
-      // Slews westOrNorth if true, else eastOrSouth if false.
+      /// <summary>
+      /// Slews westOrNorth if true, else eastOrSouth if false. Whether E/W or N/S is determined by the set Axis.
+      /// </summary>
+      /// <returns>Serial command string for movement.</returns>
       public static string AxisToMovementDirectionCommandString(TelescopeAxes Axis, bool westOrNorth)
       {
          if (Axis == TelescopeAxes.axisPrimary) // RA/Az
@@ -792,20 +1057,33 @@ namespace ASCOM.LX90
    /// Single axis state for slew on the primary axis. Returns to saved MasterCurrentState when done or aborted.
    /// Provides a specialised AbortSlew that only aborts the slew on the moving E/W axis.
    /// </summary>
-   internal class MovePrimaryAxisSlewingState : PrimaryAxisMovingState
+   internal class SlewPrimaryAxisState : PrimaryAxisMovingState
    {
       internal override bool InternalIsSlewing() { return true; }
       private bool movingW;
+
+      /// <summary>
+      /// Move the axis E at the requested rate.
+      /// </summary>
+      /// <returns>this after issuing the command to move the mount.</returns>
       internal override DriverStateBase MoveAxisEast(Rate rate)
       {
          movingW = false;
          return InternalMoveAxis(rate);
       }
+      /// <summary>
+      /// Move the axis W at the requested rate.
+      /// </summary>
+      /// <returns>this after issuing the command to move the mount.</returns>
       internal override DriverStateBase MoveAxisWest(Rate rate)
       {
          movingW = true;
          return InternalMoveAxis(rate);
       }
+      /// <summary>
+      /// Actually issue the commands to the mount and return this.
+      /// </summary>
+      /// <returns>this</returns>
       private DriverStateBase InternalMoveAxis(Rate rate)
       {
          // First set desired slew rate.
@@ -814,6 +1092,10 @@ namespace ASCOM.LX90
          serialPort.Transmit(MoveAxisHelper.AxisToMovementDirectionCommandString(TelescopeAxes.axisPrimary, movingW));
          return this;
       }
+      /// <summary>
+      /// Slew direction aware AbortSlew. Thus slews on the other axis are unaffected.
+      /// </summary>
+      /// <returns>The SavedAxisState.ResumeTracking() result.</returns>
       public override DriverStateBase AbortSlew()
       {
          if (HandleToCurrentScopeMoveTask != null)
@@ -826,7 +1108,13 @@ namespace ASCOM.LX90
          // current slew task should exit.
          return SavedAxisState.ResumeTracking();
       }
-
+      /// <summary>
+      /// Given the fact this might be the MasterCurrentState, this ensures that we can kick off a slew for the secondary axis from
+      /// the MasterCurrentState.
+      /// 
+      /// If the request is a MoveAxis for us, we ignore it. Protocol is AbortSlew() first, then issue a new MoveAxis command.
+      /// </summary>
+      /// <returns>New secondary axis state or this.</returns>
       public override DriverStateBase MoveAxis(TelescopeAxes Axis, double rate)
       {
          if (rate != 0.0)
@@ -852,7 +1140,10 @@ namespace ASCOM.LX90
          // InternalResumeTracking so we can't infinitely recurse to death.
          return MoveAxisHelper.MoveAxisStateFor(Axis).InternalResumeTracking();
       }
-
+      /// <summary>
+      /// Go back to whatever tracking state is valid for our axis.
+      /// </summary>
+      /// <returns>Correct saved state for the axis.</returns>
       public override DriverStateBase ResumeTracking()
       {
          return InternalResumeTracking();
@@ -868,15 +1159,23 @@ namespace ASCOM.LX90
    /// Single axis state for slew on the secondary axis. Returns to saved secondary axis state when done or aborted.
    /// Provides a specialised AbortSlew that only aborts the slew on the moving N/S axis.
    /// </summary>
-   internal class MoveSecondaryAxisSlewingState : SecondaryAxisMovingState
+   internal class SlewSecondaryAxisState : SecondaryAxisMovingState
    {
       internal override bool InternalIsSlewing() { return true; }
       private bool movingN = true;
+      /// <summary>
+      /// Move the axis N at the requested rate.
+      /// </summary>
+      /// <returns>this after issuing the command to move the mount.</returns>
       internal override DriverStateBase MoveAxisNorth(Rate rate)
       {
          movingN = true;
          return InternalMoveAxis(rate);
       }
+      /// <summary>
+      /// Move the axis S at the requested rate.
+      /// </summary>
+      /// <returns>this after issuing the command to move the mount.</returns>
       internal override DriverStateBase MoveAxisSouth(Rate rate)
       {
          movingN = false;
@@ -890,6 +1189,10 @@ namespace ASCOM.LX90
          serialPort.Transmit(MoveAxisHelper.AxisToMovementDirectionCommandString(TelescopeAxes.axisSecondary, movingN));
          return this;
       }
+      /// <summary>
+      /// Slew direction aware AbortSlew. Thus slews on the other axis are unaffected.
+      /// </summary>
+      /// <returns>The SavedAxisState.ResumeTracking() result.</returns>
       public override DriverStateBase AbortSlew()
       {
          if (HandleToCurrentScopeMoveTask != null)
@@ -902,6 +1205,9 @@ namespace ASCOM.LX90
          // current slew task should exit.
          return SavedAxisState.ResumeTracking();
       }
+      /// <summary>
+      /// Resume tracking on the secondary axis.
+      /// </summary>
       public override DriverStateBase ResumeTracking()
       {
          return InternalResumeTracking();
@@ -920,6 +1226,11 @@ namespace ASCOM.LX90
    /// </summary>
    partial class MoveAxisHelper
    {
+      /// <summary>
+      /// Given the axis and degrees per second rate, obtain the appropriate PrimaryAxis/SecondaryAxis moving state
+      /// and request the move N/S/E/W as applies.
+      /// </summary>
+      /// <returns>Axis moving state for the given axis, direction and rate.</returns>
       public static DriverStateBase CreateMoveAxisStateFor(TelescopeAxes Axis, double degreesPerSecRate)
       {
          foreach (Rate rate in new AxisRates(Axis))
@@ -948,6 +1259,10 @@ namespace ASCOM.LX90
          throw new ASCOM.InvalidValueException("Requested rate " + degreesPerSecRate.ToString() + " on axis " + Axis.ToString() + " is not supported.");
       }
 
+      /// <summary>
+      /// Translate the ASCOM Axis represented to the MasterCurrentState (primary axis) or SecondaryAxisCurrentState as applies.
+      /// </summary>
+      /// <returns>Current state object for the given axis.</returns>
       public static DriverStateBase MoveAxisStateFor(TelescopeAxes Axis)
       {
          if (Axis == TelescopeAxes.axisPrimary)
@@ -966,19 +1281,25 @@ namespace ASCOM.LX90
    }
 
    /// <summary>
-   /// PulseGuidingPrimaryAxisState. IsPulseGuiding() returns true.
+   /// PulseGuidePrimaryAxisState. IsPulseGuiding() returns true.
    /// Valid state transitions are those of PrimaryAxisMovingState.
    /// 
    /// This state exists to ensure that we don't attempt a pulse guide on an axis until the prior pulse
    /// guide is likely to be complete on that axis. It also does range checking on the pulse guide
    /// time in ms.
    /// 
+   /// A new pulse guide request on an already pulse guiding axis results in the current pulse guide being
+   /// cancelled (its task is stopped) and the issuing of a new pulse guide command. This behaviour seems to
+   /// be what is expected by the likes of PHD/2 Guiding.
+   /// 
    /// @caveat We presume the time asked for is based upon the guide rate we provide.
    /// </summary>
-   internal class PulseGuidingPrimaryAxisState : PrimaryAxisMovingState
+   internal class PulseGuidePrimaryAxisState : PrimaryAxisMovingState
    {
       /// <summary>
-      /// Master state can redirect requests to secondary axis state.
+      /// PulseGuidePrimaryAxisState can redirect requests to secondary axis state based upon the given Direction.
+      /// If the pulse guide request is for the primary axis, the current pulse guide is aborted and the new
+      /// PulseGuideEast/West() result returned as the next state.
       /// </summary>
       public override DriverStateBase PulseGuide(GuideDirections Direction, int Duration)
       {
@@ -1003,16 +1324,33 @@ namespace ASCOM.LX90
 
       internal override bool InternalIsPulseGuiding() { return true; }
       private bool guideW;
+      /// <summary>
+      /// Pulse guide West for the given duration.
+      /// </summary>
+      /// <returns>The new pulse guding state.</returns>
       internal override DriverStateBase PulseGuideWest(int durationMs)
       {
          guideW = true;
          return InternalPulseGuide(durationMs);
       }
+      /// <summary>
+      /// Pulse guide East for the given duration.
+      /// </summary>
+      /// <returns>The new pulse guding state.</returns>
       internal override DriverStateBase PulseGuideEast(int durationMs)
       {
          guideW = false;
          return InternalPulseGuide(durationMs);
       }
+      /// <summary>
+      /// Here we apply the driver setup pulse guiding algorithm. Broadly these are:
+      ///    1. Pulse guide commands. These are the Meade #497 serial commands for pulse guiding and include the duration.
+      ///    2. #RA...# command. We set the rate using the #RA...# command and start a task that runs for approximately the duration
+      ///       and then stops the slewing at the rate specified.
+      ///    3. Meade mount move commands at sidereal rate and start a task that runs for approximately the duration
+      ///       and then stops the slewing at the rate specified. 
+      /// </summary>
+      /// <returns>The new pulse guiding state for the primary axis.</returns>
       private DriverStateBase InternalPulseGuide(int durationMs)
       {
          ScopeMovementCancellationTokenSource = new CancellationTokenSource();
@@ -1062,7 +1400,7 @@ namespace ASCOM.LX90
                   ScopeMovementCancellationTokenSource.Token.ThrowIfCancellationRequested();
                   Thread.Sleep(1);
                }
-               Patched497Queue.Instance.WorkQueue.Enqueue(() =>
+               MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
                   MasterCurrentState = MasterCurrentState.InternalPulseGuideComplete());
                return true;
             }
@@ -1073,7 +1411,7 @@ namespace ASCOM.LX90
             }
             catch (Exception e)
             {
-               Patched497Queue.Instance.WorkQueue.Enqueue(() =>
+               MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
                   CurrentState = MasterCurrentState.AbortSlew());
                throw e;
             }
@@ -1096,29 +1434,50 @@ namespace ASCOM.LX90
    }
 
    /// <summary>
-   /// PulseGuidingSecondaryAxisState. IsPulseGuiding() returns true.
+   /// PulseGuideSecondaryAxisState. IsPulseGuiding() returns true.
    /// Valid state transitions are those of SecondaryAxisMovingState.
    /// 
    /// This state exists to ensure that we don't attempt a pulse guide on an axis until the prior pulse
    /// guide is likely to be complete on that axis. It also does range checking on the pulse guide
    /// time in ms.
    /// 
+   /// A new pulse guide request on an already pulse guiding axis results in the current pulse guide being
+   /// cancelled (its task is stopped) and the issuing of a new pulse guide command. This behaviour seems to
+   /// be what is expected by the likes of PHD/2 Guiding.
+   /// 
    /// @caveat We presume the time asked for is based upon the guide rate we provide.
    /// </summary>
-   internal class PulseGuidingSecondaryAxisState : SecondaryAxisMovingState
+   internal class PulseGuideSecondaryAxisState : SecondaryAxisMovingState
    {
       internal override bool InternalIsPulseGuiding() { return true; }
       private bool guideN;
+      /// <summary>
+      /// Pulse guide North for the given duration.
+      /// </summary>
+      /// <returns>The new pulse guding state.</returns>
       internal override DriverStateBase PulseGuideNorth(int durationMs)
       {
          guideN = true;
          return InternalPulseGuide(durationMs);
       }
+      /// <summary>
+      /// Pulse guide South for the given duration.
+      /// </summary>
+      /// <returns>The new pulse guding state.</returns>
       internal override DriverStateBase PulseGuideSouth(int durationMs)
       {
          guideN = false;
          return InternalPulseGuide(durationMs);
       }
+      /// <summary>
+      /// Here we apply the driver setup pulse guiding algorithm. Broadly these are:
+      ///    1. Pulse guide commands. These are the Meade #497 serial commands for pulse guiding and include the duration.
+      ///    2. #RE...# command. We set the rate using the #RE...# command and start a task that runs for approximately the duration
+      ///       and then stops the slewing at the rate specified.
+      ///    3. Meade mount move commands at sidereal rate and start a task that runs for approximately the duration
+      ///       and then stops the slewing at the rate specified. 
+      /// </summary>
+      /// <returns>The new pulse guiding state for the secondary axis.</returns>
       private DriverStateBase InternalPulseGuide(int durationMs)
       {
          ScopeMovementCancellationTokenSource = new CancellationTokenSource();
@@ -1159,7 +1518,7 @@ namespace ASCOM.LX90
                   ScopeMovementCancellationTokenSource.Token.ThrowIfCancellationRequested();
                   Thread.Sleep(1);
                }
-               Patched497Queue.Instance.WorkQueue.Enqueue(() =>
+               MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
                   SecondaryAxisCurrentState = SecondaryAxisCurrentState.InternalPulseGuideComplete());
                return true;
             }
@@ -1170,7 +1529,7 @@ namespace ASCOM.LX90
             }
             catch (Exception e)
             {
-               Patched497Queue.Instance.WorkQueue.Enqueue(() =>
+               MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
                   SecondaryAxisCurrentState = SecondaryAxisCurrentState.AbortSlew());
                throw e;
             }
@@ -1200,8 +1559,14 @@ namespace ASCOM.LX90
    /// 
    /// Otherwise AbortSlew() will return us to a tracking state on both axes.
    /// </summary>
-   internal class SlewingToAltAzState : DualAxisSlewingState
+   internal class SlewToAltAzState : DualAxisSlewingState
    {
+      /// <summary>
+      /// Command the mount to slew to the given Alt/Az. The new state is set for MasterCurrentState and SecondaryCurrentState so that all
+      /// operation requests on either axis are routed to the correct DualAxisMovingState.
+      /// </summary>
+      /// <caveats>Alt/Az is only valid for an Alt/Az mounted scope. Alt/Az is base relative and not horizon relative.</caveats>
+      /// <returns>SlewToAltAzState.</returns>
       public override DriverStateBase SlewToAltAzAsync(double Azimuth, double Altitude)
       {
          ScopeMovementCancellationTokenSource = new CancellationTokenSource();
@@ -1244,7 +1609,7 @@ namespace ASCOM.LX90
                   while (isHwSlewing)
                   {
                      Task<bool> hwSlewingTask = new Task<bool>(() => { return InternalIsHwSlewing(); });
-                     Patched497Queue.Instance.WorkQueue.Enqueue(() => hwSlewingTask.RunSynchronously());
+                     MountTaskHandler.Instance.WorkQueue.Enqueue(() => hwSlewingTask.RunSynchronously());
                      if (isHwSlewing = hwSlewingTask.Result)
                      {
                         ScopeMovementCancellationTokenSource.Token.ThrowIfCancellationRequested();
@@ -1253,7 +1618,7 @@ namespace ASCOM.LX90
                      }
                   }
 
-                  Patched497Queue.Instance.WorkQueue.Enqueue(() => 
+                  MountTaskHandler.Instance.WorkQueue.Enqueue(() => 
                      // If still the expected state, then this returns all the
                      // axes states to what they were before we kicked off the slew.
                      CurrentState = MasterCurrentState.ResumeTracking());
@@ -1266,7 +1631,7 @@ namespace ASCOM.LX90
                }
                catch (Exception e)
                {
-                  Patched497Queue.Instance.WorkQueue.Enqueue(() => 
+                  MountTaskHandler.Instance.WorkQueue.Enqueue(() => 
                      CurrentState = MasterCurrentState.AbortSlew());
                   throw e;
                }
@@ -1274,7 +1639,7 @@ namespace ASCOM.LX90
          }
          catch (Exception e)
          {
-            Patched497Queue.Instance.WorkQueue.Enqueue(() => 
+            MountTaskHandler.Instance.WorkQueue.Enqueue(() => 
                CurrentState = MasterCurrentState.AbortSlew());
             throw e;
          }
@@ -1291,8 +1656,13 @@ namespace ASCOM.LX90
    /// 
    /// Otherwise AbortSlew() will return us to a tracking state on both axes.
    /// </summary>
-   internal class SlewingToCoordinatesState : DualAxisSlewingState
+   internal class SlewToCoordinatesState : DualAxisSlewingState
    {
+      /// <summary>
+      /// Command the mount to slew to the given celestial coordinates. The new state is set for MasterCurrentState and SecondaryCurrentState so that all
+      /// operation requests on either axis are routed to the correct DualAxisMovingState.
+      /// </summary>
+      /// <returns>SlewToCoordinatesState.</returns>
       public override DriverStateBase SlewToCoordinatesAsync(double RightAscension, double Declination)
       {
          ScopeMovementCancellationTokenSource = new CancellationTokenSource();
@@ -1335,7 +1705,7 @@ namespace ASCOM.LX90
                   while(isHwSlewing)
                   {
                      Task<bool> hwSlewingTask = new Task<bool>(() => { return InternalIsHwSlewing(); });
-                     Patched497Queue.Instance.WorkQueue.Enqueue(() => hwSlewingTask.RunSynchronously());
+                     MountTaskHandler.Instance.WorkQueue.Enqueue(() => hwSlewingTask.RunSynchronously());
                      if (isHwSlewing = hwSlewingTask.Result)
                      {
                         ScopeMovementCancellationTokenSource.Token.ThrowIfCancellationRequested();
@@ -1345,7 +1715,7 @@ namespace ASCOM.LX90
                   }
 
                   // HW no longer reports slewing so queue slew complete.
-                  Patched497Queue.Instance.WorkQueue.Enqueue(() =>
+                  MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
                      // If still the expected state, then this returns all the
                      // axes states to what they were before we kicked off the slew.
                      CurrentState = MasterCurrentState.ResumeTracking());
@@ -1358,7 +1728,7 @@ namespace ASCOM.LX90
                }
                catch (Exception e)
                {
-                  Patched497Queue.Instance.WorkQueue.Enqueue(() =>
+                  MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
                      CurrentState = MasterCurrentState.AbortSlew());
                   throw e;
                }
@@ -1366,7 +1736,7 @@ namespace ASCOM.LX90
          }
          catch (Exception e)
          {
-            Patched497Queue.Instance.WorkQueue.Enqueue(() =>
+            MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
                CurrentState = MasterCurrentState.AbortSlew());
             throw e;
          }
@@ -1445,22 +1815,34 @@ namespace ASCOM.LX90
          }
       }
 
+      /// <summary>
+      /// If we are tracking we can slew to Alt/Az.
+      /// </summary>
+      /// <returns>New dual axis Alt/Az slewing state if tracking otherwise no-op.</returns>
       public override DriverStateBase SlewToAltAzAsync(double Azimuth, double Altitude)
       {
          if (MasterCurrentState.IsTracking())
-            return (new SlewingToAltAzState()).SlewToAltAzAsync(Azimuth, Altitude);
+            return (new SlewToAltAzState()).SlewToAltAzAsync(Azimuth, Altitude);
          else
             return this;
       }
 
+      /// <summary>
+      /// If we are tracking we can slew to celestial coordinates.
+      /// </summary>
+      /// <returns>New dual axis celestial coordinates slewing state if tracking otherwise no-op.</returns>
       public override DriverStateBase SlewToCoordinatesAsync(double RightAscension, double Declination)
       {
          if (MasterCurrentState.IsTracking())
-            return (new SlewingToCoordinatesState()).SlewToCoordinatesAsync(RightAscension, Declination);
+            return (new SlewToCoordinatesState()).SlewToCoordinatesAsync(RightAscension, Declination);
          else
             return this;
       }
 
+      /// <summary>
+      /// Sync the tracking mount to an Alt/Az. i.e. Now slewing mount can have its Alt/Az syncd mid slew.
+      /// </summary>
+      /// <returns>this.</returns>
       public override DriverStateBase SyncToAltAz(double Azimuth, double Altitude)
       {
          if (!MasterCurrentState.IsTracking())
@@ -1469,7 +1851,7 @@ namespace ASCOM.LX90
          string Az = utilities.DegreesToDM(Azimuth, "*", "");
          serialPort.Transmit(":Sz" + Az + "#");
          byte[] valid = serialPort.ReceiveCountedBinary(1);
-         if (valid[0] != 1 && !valid[0].ToString().Equals("1"))
+         if (valid[0] != '1')
          {
             throw new ASCOM.InvalidValueException("Mount rejected Azimuth " + Azimuth.ToString() + "(" + Az + ")");
          }
@@ -1478,7 +1860,7 @@ namespace ASCOM.LX90
          string Alt = utilities.DegreesToDM(Altitude, "*", "");
          serialPort.Transmit(":Sa" + Alt + "#");
          valid = serialPort.ReceiveCountedBinary(1);
-         if (valid[0] != 1 && !valid[0].ToString().Equals("1"))
+         if (valid[0] != '1')
          {
             throw new ASCOM.InvalidValueException("Mount rejected Altitude " + Altitude.ToString() + "(" + Alt + ")");
          }
@@ -1488,6 +1870,10 @@ namespace ASCOM.LX90
          return this;
       }
 
+      /// <summary>
+      /// Sync the tracking mount to celestial coordinates. i.e. Now slewing mount can have its celestial coordinates syncd mid slew.
+      /// </summary>
+      /// <returns>this.</returns>
       public override DriverStateBase SyncToCoordinates(double RightAscension, double Declination)
       {
          if (!MasterCurrentState.IsTracking())
@@ -1496,7 +1882,7 @@ namespace ASCOM.LX90
          RA = RA.Substring(0, 5) + Math.Round(Decimal.Parse(RA.Substring(6, 2)) / new Decimal(60), 1).ToString();
          serialPort.Transmit(":Sr" + RA + "#");
          byte[] valid = serialPort.ReceiveCountedBinary(1);
-         if (valid[0] != 1 && !valid[0].ToString().Equals("1"))
+         if (valid[0] != '1')
          {
             throw new ASCOM.InvalidValueException("Mount rejected RA " + RightAscension.ToString() + "(" + RA + ")");
          }
@@ -1535,125 +1921,168 @@ namespace ASCOM.LX90
          return this;
       }
 
+      /// <summary>
+      /// Pulse guide north for the given duration if valid.
+      /// 
+      /// This axis is not slewing, that we know.
+      /// The other axis can't be doing a dual axis goto because this method is not
+      /// callable if that is the case.
+      /// So the only possibilities are:
+      ///   1. The other axis is tracking - we don't care.
+      ///   2. The other axis is doing a single axis slew - we do care. Mixing pulse guiding and a slew is nonsense.
+      ///   3. The other axis is doing a pulse guide - we don't care.
+      /// </summary>
+      /// <returns>New pulse guide state north for given duration if no one is slewing.</returns>
       internal override DriverStateBase PulseGuideNorth(int durationMs)
       {
-         // This axis is not slewing, that we know.
-         // The other axis can't be doing a dual axis goto because this method is not
-         // callable if that is the case.
-         // So the only possibilities are:
-         //   1. The other axis is tracking - we don't care.
-         //   2. The other axis is doing a single axis slew - we do care. Mixing pulse guiding and a slew is nonsense.
-         //   3. The other axis is doing a pulse guide - we don't care.
          if (!MasterCurrentState.InternalIsSlewing())
-            return (new PulseGuidingSecondaryAxisState()).PulseGuideNorth(durationMs);
+            return (new PulseGuideSecondaryAxisState()).PulseGuideNorth(durationMs);
          else
             return this;
       }
 
+      /// <summary>
+      /// Pulse guide south for the given duration if valid.
+      /// 
+      /// This axis is not slewing, that we know.
+      /// The other axis can't be doing a dual axis goto because this method is not
+      /// callable if that is the case.
+      /// So the only possibilities are:
+      ///   1. The other axis is tracking - we don't care.
+      ///   2. The other axis is doing a single axis slew - we do care. Mixing pulse guiding and a slew is nonsense.
+      ///   3. The other axis is doing a pulse guide - we don't care.
+      /// </summary>
+      /// <returns>New pulse guide state south for given duration if no one is slewing.</returns>
       internal override DriverStateBase PulseGuideSouth(int durationMs)
       {
-         // This axis is not slewing, that we know.
-         // The other axis can't be doing a dual axis goto because this method is not
-         // callable if that is the case.
-         // So the only possibilities are:
-         //   1. The other axis is tracking - we don't care.
-         //   2. The other axis is doing a single axis slew - we do care. Mixing pulse guiding and a slew is nonsense.
-         //   3. The other axis is doing a pulse guide - we don't care.
          if (!MasterCurrentState.InternalIsSlewing())
-            return (new PulseGuidingSecondaryAxisState()).PulseGuideSouth(durationMs);
+            return (new PulseGuideSecondaryAxisState()).PulseGuideSouth(durationMs);
          else
             return this;
       }
 
+      /// <summary>
+      /// Move the axis north at the supplied rate if valid.
+      /// 
+      /// This axis is not slewing, that we know.
+      /// The other axis can't be doing a dual axis goto because this method is not
+      /// callable if that is the case.
+      /// So the only possibilities are:
+      ///   1. The other axis is tracking - we don't care.
+      ///   2. The other axis is doing a single axis slew - we don't care.
+      ///   3. The other axis is doing a pulse guide - we do care. Mixing pulse guiding and a slew is nonsense.
+      /// </summary>
+      /// <returns>New axis moving state north at the given rate if no one is slewing.</returns>
       internal override DriverStateBase MoveAxisNorth(Rate rate)
       {
-         // This axis is not slewing, that we know.
-         // The other axis can't be doing a dual axis goto because this method is not
-         // callable if that is the case.
-         // So the only possibilities are:
-         //   1. The other axis is tracking - we don't care.
-         //   2. The other axis is doing a single axis slew - we don't care.
-         //   3. The other axis is doing a pulse guide - we do care. Mixing pulse guiding and a slew is nonsense.
          if (!MasterCurrentState.IsPulseGuiding())
-            return (new MoveSecondaryAxisSlewingState()).MoveAxisNorth(rate);
+            return (new SlewSecondaryAxisState()).MoveAxisNorth(rate);
          else
             return this;
       }
 
+      /// <summary>
+      /// Move the axis south at the supplied rate if valid.
+      /// 
+      /// This axis is not slewing, that we know.
+      /// The other axis can't be doing a dual axis goto because this method is not
+      /// callable if that is the case.
+      /// So the only possibilities are:
+      ///   1. The other axis is tracking - we don't care.
+      ///   2. The other axis is doing a single axis slew - we don't care.
+      ///   3. The other axis is doing a pulse guide - we do care. Mixing pulse guiding and a slew is nonsense.
+      /// </summary>
+      /// <returns>New axis moving state south at the given rate if no one is slewing.</returns>
       internal override DriverStateBase MoveAxisSouth(Rate rate)
       {
-         // This axis is not slewing, that we know.
-         // The other axis can't be doing a dual axis goto because this method is not
-         // callable if that is the case.
-         // So the only possibilities are:
-         //   1. The other axis is tracking - we don't care.
-         //   2. The other axis is doing a single axis slew - we don't care.
-         //   3. The other axis is doing a pulse guide - we do care. Mixing pulse guiding and a slew is nonsense.
          if (!MasterCurrentState.IsPulseGuiding())
-            return (new MoveSecondaryAxisSlewingState()).MoveAxisSouth(rate);
+            return (new SlewSecondaryAxisState()).MoveAxisSouth(rate);
          else
             return this;
       }
    }
 
+   /// <summary>
+   /// This represents the primary axis tracking state. We are always moving at sidereal or lunar rate, never still.
+   /// </summary>
    partial class PrimaryAxisTrackingState : TrackingState
    {
+      /// <summary>
+      /// Pulse guide East for the given duration.
+      /// 
+      /// This axis is not slewing, that we know.
+      /// The other axis can't be doing a dual axis goto because this method is not
+      /// callable if that is the case.
+      /// So the only possibilities are:
+      ///   1. The other axis is tracking - we don't care.
+      ///   2. The other axis is doing a single axis slew - we do care. Mixing pulse guiding and a slew is nonsense.
+      ///   3. The other axis is doing a pulse guide - we don't care.
+      /// </summary>
+      /// <returns>New pulse guiding state if no one is slewing, otherwise a no-op.</returns>
       internal override DriverStateBase PulseGuideEast(int durationMs)
       {
-         // This axis is not slewing, that we know.
-         // The other axis can't be doing a dual axis goto because this method is not
-         // callable if that is the case.
-         // So the only possibilities are:
-         //   1. The other axis is tracking - we don't care.
-         //   2. The other axis is doing a single axis slew - we do care. Mixing pulse guiding and a slew is nonsense.
-         //   3. The other axis is doing a pulse guide - we don't care.
          if (!SecondaryAxisCurrentState.InternalIsSlewing())
-            return (new PulseGuidingPrimaryAxisState()).PulseGuideEast(durationMs);
+            return (new PulseGuidePrimaryAxisState()).PulseGuideEast(durationMs);
          else
             return this;
       }
 
+      /// <summary>
+      /// Pulse guide West for the given duration.
+      /// 
+      /// This axis is not slewing, that we know.
+      /// The other axis can't be doing a dual axis goto because this method is not
+      /// callable if that is the case.
+      /// So the only possibilities are:
+      ///   1. The other axis is tracking - we don't care.
+      ///   2. The other axis is doing a single axis slew - we do care. Mixing pulse guiding and a slew is nonsense.
+      ///   3. The other axis is doing a pulse guide - we don't care.
+      /// </summary>
+      /// <returns>New pulse guiding state if no one is slewing, otherwise a no-op.</returns>
       internal override DriverStateBase PulseGuideWest(int durationMs)
       {
-         // This axis is not slewing, that we know.
-         // The other axis can't be doing a dual axis goto because this method is not
-         // callable if that is the case.
-         // So the only possibilities are:
-         //   1. The other axis is tracking - we don't care.
-         //   2. The other axis is doing a single axis slew - we do care. Mixing pulse guiding and a slew is nonsense.
-         //   3. The other axis is doing a pulse guide - we don't care.
          if (!SecondaryAxisCurrentState.InternalIsSlewing())
-            return (new PulseGuidingPrimaryAxisState()).PulseGuideWest(durationMs);
+            return (new PulseGuidePrimaryAxisState()).PulseGuideWest(durationMs);
          else
             return this;
       }
 
+      /// <summary>
+      /// Move the primary axis East at the given rate if valid.
+      /// 
+      /// This axis is not slewing, that we know.
+      /// The other axis can't be doing a dual axis goto because this method is not
+      /// callable if that is the case.
+      /// So the only possibilities are:
+      ///   1. The other axis is tracking - we don't care.
+      ///   2. The other axis is doing a single axis slew - we don't care.
+      ///   3. The other axis is doing a pulse guide - we do care. Mixing pulse guiding and a slew is nonsense.
+      /// </summary>
+      /// <returns>New eastward slewing state if valid otherwise a no-op.</returns>
       internal override DriverStateBase MoveAxisEast(Rate rate)
       {
-         // This axis is not slewing, that we know.
-         // The other axis can't be doing a dual axis goto because this method is not
-         // callable if that is the case.
-         // So the only possibilities are:
-         //   1. The other axis is tracking - we don't care.
-         //   2. The other axis is doing a single axis slew - we don't care.
-         //   3. The other axis is doing a pulse guide - we do care. Mixing pulse guiding and a slew is nonsense.
          if (!SecondaryAxisCurrentState.IsPulseGuiding())
-            return (new MovePrimaryAxisSlewingState()).MoveAxisEast(rate);
+            return (new SlewPrimaryAxisState()).MoveAxisEast(rate);
          else
             return this;
       }
 
+      /// <summary>
+      /// Move the primary axis West at the given rate if valid.
+      /// 
+      /// This axis is not slewing, that we know.
+      /// The other axis can't be doing a dual axis goto because this method is not
+      /// callable if that is the case.
+      /// So the only possibilities are:
+      ///   1. The other axis is tracking - we don't care.
+      ///   2. The other axis is doing a single axis slew - we don't care.
+      ///   3. The other axis is doing a pulse guide - we do care. Mixing pulse guiding and a slew is nonsense.
+      /// </summary>
+      /// <returns>New westward slewing state if valid otherwise a no-op.</returns>
       internal override DriverStateBase MoveAxisWest(Rate rate)
       {
-         // This axis is not slewing, that we know.
-         // The other axis can't be doing a dual axis goto because this method is not
-         // callable if that is the case.
-         // So the only possibilities are:
-         //   1. The other axis is tracking - we don't care.
-         //   2. The other axis is doing a single axis slew - we don't care.
-         //   3. The other axis is doing a pulse guide - we do care. Mixing pulse guiding and a slew is nonsense.
          if (!SecondaryAxisCurrentState.IsPulseGuiding())
-            return (new MovePrimaryAxisSlewingState()).MoveAxisWest(rate);
+            return (new SlewPrimaryAxisState()).MoveAxisWest(rate);
          else
             return this;
       }
