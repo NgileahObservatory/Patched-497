@@ -76,6 +76,8 @@
          this.slewRateLabel = new System.Windows.Forms.Label();
          this.slewRateComboBox = new System.Windows.Forms.ComboBox();
          this.parkButton = new System.Windows.Forms.Button();
+         this.stressRAGuidingButton = new System.Windows.Forms.Button();
+         this.stressREGuidingButton = new System.Windows.Forms.Button();
          this.primaryAxisGroupBox.SuspendLayout();
          ((System.ComponentModel.ISupportInitialize)(this.ewPulseGuideNumericUpDown)).BeginInit();
          this.secondaryAxisGroupBox.SuspendLayout();
@@ -615,11 +617,33 @@
          this.parkButton.UseVisualStyleBackColor = true;
          this.parkButton.Click += new System.EventHandler(this.onParkClick);
          // 
+         // stressRAGuidingButton
+         // 
+         this.stressRAGuidingButton.Location = new System.Drawing.Point(39, 501);
+         this.stressRAGuidingButton.Name = "stressRAGuidingButton";
+         this.stressRAGuidingButton.Size = new System.Drawing.Size(155, 23);
+         this.stressRAGuidingButton.TabIndex = 33;
+         this.stressRAGuidingButton.Text = "Stress Pulse Guide :RA#";
+         this.stressRAGuidingButton.UseVisualStyleBackColor = true;
+         this.stressRAGuidingButton.Click += new System.EventHandler(this.stressRAGuidingButton_Click);
+         // 
+         // stressREGuidingButton
+         // 
+         this.stressREGuidingButton.Location = new System.Drawing.Point(38, 532);
+         this.stressREGuidingButton.Name = "stressREGuidingButton";
+         this.stressREGuidingButton.Size = new System.Drawing.Size(155, 23);
+         this.stressREGuidingButton.TabIndex = 34;
+         this.stressREGuidingButton.Text = "Stress Pulse Guide :RE#";
+         this.stressREGuidingButton.UseVisualStyleBackColor = true;
+         this.stressREGuidingButton.Click += new System.EventHandler(this.stressREGuidingButton_Click);
+         // 
          // LX90TestForm
          // 
          this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
          this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-         this.ClientSize = new System.Drawing.Size(396, 504);
+         this.ClientSize = new System.Drawing.Size(396, 569);
+         this.Controls.Add(this.stressREGuidingButton);
+         this.Controls.Add(this.stressRAGuidingButton);
          this.Controls.Add(this.parkButton);
          this.Controls.Add(this.slewRateLabel);
          this.Controls.Add(this.slewRateComboBox);
@@ -715,6 +739,8 @@
       private System.Windows.Forms.CheckBox nCheckBox;
       private System.Windows.Forms.NumericUpDown ewPulseGuideNumericUpDown;
       private System.Windows.Forms.NumericUpDown nsPulseGuideNumericUpDown;
+      private System.Windows.Forms.Button stressRAGuidingButton;
+      private System.Windows.Forms.Button stressREGuidingButton;
    }
 }
 

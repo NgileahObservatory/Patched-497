@@ -41,6 +41,8 @@ Source: "C:\ASCOM\Projects\Patched497\Patched497\docs\PulseGuidingStateMachine.p
 Source: "C:\ASCOM\Projects\Patched497\Patched497\docs\SlewStateMachine.png"; DestDir: "{app}\docs";
 Source: "C:\ASCOM\Projects\Patched497\Patched497\docs\MoveAxisStateMachine.png"; DestDir: "{app}\docs";
 Source: "C:\ASCOM\Projects\Patched497\Patched497\docs\DriverSetup.png"; DestDir: "{app}\docs";
+Source: "C:\ASCOM\Projects\Patched497\Patched497\docs\Overview.png"; DestDir: "{app}\docs";
+Source: "C:\ASCOM\Projects\Patched497\Patched497\docs\ClassDiagram.png"; DestDir: "{app}\docs";
 
 
 ; Only if driver is .NET

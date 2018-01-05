@@ -103,6 +103,8 @@ namespace ASCOM.LX90
          sCheckBox.Enabled = connectedNow;
          ewPulseGuideNumericUpDown.Enabled = connectedNow && ewPulseGuidingRadioButton.Checked;
          nsPulseGuideNumericUpDown.Enabled = connectedNow && nsPulseGuidingRadioButton.Checked;
+         stressRAGuidingButton.Enabled = connectedNow && ewPulseGuidingRadioButton.Checked;
+         stressREGuidingButton.Enabled = connectedNow && nsPulseGuidingRadioButton.Checked;
       }
 
       private bool IsConnected
@@ -287,6 +289,166 @@ namespace ASCOM.LX90
       private void nsPulseGuidingRadioButton_CheckedChanged(object sender, EventArgs e)
       {
          nsPulseGuideNumericUpDown.Enabled = nsPulseGuidingRadioButton.Checked;
+      }
+
+      private static System.Windows.Forms.Timer stressRATimer = null;
+      private static bool lastRAE = false;
+      private static double lastRA = 0.0;
+      private static System.Windows.Forms.Timer stressRETimer = null;
+      private static bool lastREN = false;
+      private static double lastDec = 0.0;
+      private static void refreshRAStateData(object source, EventArgs args)
+      {
+         try
+         {
+            if (form != null && driver != null && driver.Connected)
+            {
+               stressRATimer.Stop();
+               Util utilities = new Util();
+               //double RA = driver.RightAscension;
+               //if (source == null && args == null)
+               //{
+               //   lastRA = RA;
+               //}
+               if (lastRAE)
+               {
+                  //if (lastRA <= RA && source != null && args != null)
+                  //{
+                  //   MessageBox.Show("No movement in RA or movement in wrong direction. RA now " 
+                  //      + String.Format("{0:0.00000}", utilities.HoursToHMS(RA))
+                  //      + " vs "
+                  //      + String.Format("{0:0.00000}", utilities.HoursToHMS(lastRA)), ":RA# Guiding Failure", MessageBoxButtons.OK);
+                  //   return;
+                  //}
+                  //else
+                  //{
+                     driver.PulseGuide(DeviceInterface.GuideDirections.guideWest,10000);
+                  //}
+                  lastRAE = false;
+               }
+               else
+               {
+                  //if( lastRA >= RA && source != null && args != null)
+                  //{
+                  //   MessageBox.Show("No movement in RA or movement in wrong direction. RA now "
+                  //      + String.Format("{0:0.00000}", utilities.HoursToHMS(RA))
+                  //      + " vs "
+                  //      + String.Format("{0:0.00000}", utilities.HoursToHMS(lastRA)), ":RA# Guiding Failure", MessageBoxButtons.OK);
+                  //   return;
+                  //}
+                  //else
+                  //{
+                     driver.PulseGuide(DeviceInterface.GuideDirections.guideEast, 10000);
+                  //}
+                  lastRAE = true;
+               }
+               //lastRA = RA;
+               stressRATimer.Start();
+            }
+         }
+         catch (Exception e)
+         {
+            // Just don't do anything.
+            Console.Write(e.Message);
+            MessageBox.Show(e.Message, "Exception in timer handler.", MessageBoxButtons.OK);
+         }
+      }
+
+      private static void refreshREStateData(object source, EventArgs args)
+      {
+         try
+         {
+            if (form != null && driver != null && driver.Connected)
+            {
+               stressRETimer.Stop();
+               Util utilities = new Util();
+               //double Dec = driver.Declination;
+               //if (source == null && args == null)
+               //{
+               //   lastDec = Dec;
+               //}
+               if (lastREN)
+               {
+                  //if (lastDec <= Dec && source != null && args != null)
+                  //{
+                  //   MessageBox.Show("No movement in Dec or movement in wrong direction."
+                  //      + String.Format("{0:0.00000}", utilities.DegreesToDMS(Dec))
+                  //      + " vs "
+                  //      + String.Format("{0:0.00000}", utilities.DegreesToDMS(lastDec)), ":RE# Guiding Failure", MessageBoxButtons.OK);
+                  //   return;
+                  //}
+                  //else
+                  //{
+                     driver.PulseGuide(DeviceInterface.GuideDirections.guideSouth, 10000);
+                  //}
+                  lastREN = false;
+               }
+               else
+               {
+                  //if (lastDec >= Dec && source != null && args != null)
+                  //{
+                  //   MessageBox.Show("No movement in Dec or movement in wrong direction."
+                  //      + String.Format("{0:0.00000}", utilities.DegreesToDMS(Dec))
+                  //      + " vs "
+                  //      + String.Format("{0:0.00000}", utilities.DegreesToDMS(lastDec)), ":RE# Guiding Failure", MessageBoxButtons.OK);
+                  //   return;
+                  //}
+                  //else
+                  //{
+                     driver.PulseGuide(DeviceInterface.GuideDirections.guideNorth, 10000);
+                  //}
+                  lastREN = true;
+               }
+               //lastDec = Dec;
+               stressRETimer.Start();
+            }
+         }
+         catch (Exception e)
+         {
+            // Just don't do anything.
+            Console.Write(e.Message);
+            MessageBox.Show(e.Message, "Exception in timer handler.", MessageBoxButtons.OK);
+         }
+      }
+
+      private void stressRAGuidingButton_Click(object sender, EventArgs e)
+      {
+         if (stressRATimer == null)
+         {
+            //refreshTimer.Stop();
+            stressRATimer = new System.Windows.Forms.Timer();
+            refreshRAStateData(null, null);
+            stressRATimer.Tick += new EventHandler(refreshRAStateData);
+            stressRATimer.Interval = 10000;
+            stressRATimer.Start();
+         }
+         else
+         {
+            stressRATimer.Stop();
+            stressRATimer = null;
+            //if (stressRETimer == null)
+            //   refreshTimer.Start();
+         }
+      }
+
+      private void stressREGuidingButton_Click(object sender, EventArgs e)
+      {
+         if (stressRETimer == null)
+         {
+            //refreshTimer.Stop();
+            stressRETimer = new System.Windows.Forms.Timer();
+            refreshREStateData(null, null);
+            stressRETimer.Tick += new EventHandler(refreshREStateData);
+            stressRETimer.Interval = 10000;
+            stressRETimer.Start();
+         }
+         else
+         {
+            stressRETimer.Stop();
+            stressRETimer = null;
+            //if (stressRATimer == null)
+            //   refreshTimer.Start();
+         }
       }
    }
 }
