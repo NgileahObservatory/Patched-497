@@ -1419,6 +1419,7 @@ namespace ASCOM.LX90
 
          return this;
       }
+
       internal override DriverStateBase InternalPulseGuideComplete()
       {
          if (!Telescope.guidingIsPulseGuideCommands())
@@ -1430,6 +1431,11 @@ namespace ASCOM.LX90
             serialPort.Transmit(":Q" + (guideW ? "w" : "e") + "#");
          }
          return SavedAxisState.ResumeTracking();
+      }
+
+      public override DriverStateBase AbortSlew()
+      {
+         return InternalPulseGuideComplete();
       }
    }
 
@@ -1536,6 +1542,7 @@ namespace ASCOM.LX90
          }, ScopeMovementCancellationTokenSource.Token);
          return this;
       }
+
       internal override DriverStateBase InternalPulseGuideComplete()
       {
          if (!Telescope.guidingIsPulseGuideCommands())
@@ -1547,6 +1554,11 @@ namespace ASCOM.LX90
             serialPort.Transmit(":Q" + (guideN ? "n" : "s") + "#");
          }
          return SavedAxisState.ResumeTracking();
+      }
+
+      public override DriverStateBase AbortSlew()
+      {
+         return InternalPulseGuideComplete();
       }
    }
 
