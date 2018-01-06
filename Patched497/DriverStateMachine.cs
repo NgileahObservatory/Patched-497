@@ -65,6 +65,26 @@ namespace ASCOM.LX90
       public static DriverStateBase SecondaryAxisCurrentState = null;
 
       /// <summary>
+      /// Save the rate last set on the primary axis so that we don't unnecessarily set the
+      /// rate if it has not changed from when we last set the rate.
+      /// 
+      /// This is mainly to see if only issuing :RA{+ve/-ve rate}# commands when the rate
+      /// changes instead of with every movement using :RA...# fixes issues with stability
+      /// slewing at those custom rates.
+      /// </summary>
+      public static double lastPrimaryAxisRate = 0.0;
+
+      /// <summary>
+      /// Save the rate last set on the secondary axis so that we don't unnecessarily set the
+      /// rate if it has not changed from when we last set the rate.
+      /// 
+      /// This is mainly to see if only issuing :RE{+ve/-ve rate}# commands when the rate
+      /// changes instead of with every movement using :RA...# fixes issues with stability
+      /// slewing at those custom rates.
+      /// </summary>
+      public static double lastSecondaryAxisRate = 0.0;
+
+      /// <summary>
       /// Property setting understands whether the state applies to a single axis
       /// or dual axes.
       /// 
@@ -998,40 +1018,67 @@ namespace ASCOM.LX90
    /// </summary>
    public partial class MoveAxisHelper
    {
-      // Convert the rate on the axis to a Meade serial protocol axis rate command.
-      public static string RateToRateCommandString(TelescopeAxes Axis, Rate rate)
+      /// <summary>
+      /// Get a Tuple representing the rate command string and whether to issue the command or not
+      /// based upon what rate we last set for the axis.
+      /// </summary>
+      /// <returns>Well I thought an empty string would do but then its too easy to ignore and use directly in a 
+      /// command to the mount without checking if that is the last rate we applied, so I went all complicated to be
+      /// a pain in the ar$e and MAKE the programmer take note.
+      /// 
+      /// Tuple< bool, string > first is whether the rate differs from last, second is the command string.</returns>
+      public static Tuple<bool, string> RateToRateCommandString(TelescopeAxes Axis, Rate rate)
       {
+         if (Axis == TelescopeAxes.axisTertiary )
+         {
+            throw new InvalidValueException("Tertiary axis not supported by driver.");
+         }
+
+         string command;
          if (AxisRates.ratesApproxEqual(rate.Minimum, ASCOM.LX90.AxisRates.Sidereal))
          {
-            return ":RG#";
+            command = ":RG#";
          }
          else if (AxisRates.ratesApproxEqual(rate.Minimum, ASCOM.LX90.AxisRates.Siderealx2))
          {
-            return ":RC#";
+            command = ":RC#";
          }
          else if (AxisRates.ratesApproxEqual(rate.Minimum, ASCOM.LX90.AxisRates.SlewHalfDegreePerSec))
          {
-            return ":RM#";
+            command = ":RM#";
          }
          else if (AxisRates.ratesApproxEqual(rate.Minimum, ASCOM.LX90.AxisRates.SlewSixPointFiveDegreePerSec))
          {
-            return ":RS#";
+            command = ":RS#";
          }
          else if (rate.Minimum > ASCOM.LX90.AxisRates.Siderealx2 && rate.Minimum < ASCOM.LX90.AxisRates.SlewSixPointFiveDegreePerSec)
          {
             if (Axis == TelescopeAxes.axisPrimary)
             {
-               return ":RA" + String.Format("{0:0.0####;-0.0####}", Telescope.customRateReverseLR ? -rate.Minimum : rate.Minimum) + "#";
+               command = ":RA" + String.Format("{0:0.0####;-0.0####}", Telescope.customRateReverseLR ? -rate.Minimum : rate.Minimum) + "#";
             }
             else
             {
-               return ":RE" + String.Format("{0:0.0####;-0.0####}", Telescope.customRateReverseUD ? -rate.Minimum : rate.Minimum) + "#";
+               command = ":RE" + String.Format("{0:0.0####;-0.0####}", Telescope.customRateReverseUD ? -rate.Minimum : rate.Minimum) + "#";
             }
          }
          else
          {
             // Fallback rate...
-            return ":RS#";
+            command = ":RS#";
+         }
+
+         if (Axis == TelescopeAxes.axisPrimary)
+         {
+            Tuple<bool, string> retVals = new Tuple<bool, string>(AxisRates.ratesApproxEqual(DriverStateBase.lastPrimaryAxisRate, rate.Minimum), command);
+            DriverStateBase.lastPrimaryAxisRate = rate.Minimum;
+            return retVals;
+         }
+         else
+         {
+            Tuple<bool, string> retVals = new Tuple<bool, string>(AxisRates.ratesApproxEqual(DriverStateBase.lastSecondaryAxisRate, rate.Minimum), command);
+            DriverStateBase.lastSecondaryAxisRate = rate.Minimum;
+            return retVals;
          }
       }
 
@@ -1087,7 +1134,11 @@ namespace ASCOM.LX90
       private DriverStateBase InternalMoveAxis(Rate rate)
       {
          // First set desired slew rate.
-         serialPort.Transmit(MoveAxisHelper.RateToRateCommandString(TelescopeAxes.axisPrimary, rate));
+         Tuple<bool, string> rateCommand = MoveAxisHelper.RateToRateCommandString(TelescopeAxes.axisPrimary, rate);
+         if (rateCommand.Item1)
+         {
+            serialPort.Transmit(rateCommand.Item2);
+         }
          // Then start the axis moving and leave it moving.
          serialPort.Transmit(MoveAxisHelper.AxisToMovementDirectionCommandString(TelescopeAxes.axisPrimary, movingW));
          return this;
@@ -1184,7 +1235,11 @@ namespace ASCOM.LX90
       private DriverStateBase InternalMoveAxis(Rate rate)
       {
          // First set desired slew rate.
-         serialPort.Transmit(MoveAxisHelper.RateToRateCommandString(TelescopeAxes.axisSecondary, rate));
+         Tuple<bool, string> rateCommand = MoveAxisHelper.RateToRateCommandString(TelescopeAxes.axisPrimary, rate);
+         if (rateCommand.Item1)
+         {
+            serialPort.Transmit(rateCommand.Item2);
+         }
          // Then slew in the direction that will move the telescope in the direction requested (note: this may require Up/Dn reversal).
          serialPort.Transmit(MoveAxisHelper.AxisToMovementDirectionCommandString(TelescopeAxes.axisSecondary, movingN));
          return this;
@@ -1374,7 +1429,13 @@ namespace ASCOM.LX90
                // Negate the rate, reverses L/R for :RA#.
                guideRate = -guideRate;
             }
-            serialPort.Transmit(":RA" + String.Format("{0:0.0####;-0.0####}", guideRate) + "#");
+
+            // Only issue :RA if the rate is not what we have already set.
+            if (!AxisRates.ratesApproxEqual(guideRate, lastPrimaryAxisRate))
+            {
+               serialPort.Transmit(":RA" + String.Format("{0:0.0####;-0.0####}", guideRate) + "#");
+               DriverStateBase.lastPrimaryAxisRate = guideRate;
+            }
             serialPort.Transmit(MoveAxisHelper.AxisToMovementDirectionCommandString(TelescopeAxes.axisPrimary, guideW));
          }
          else if(Telescope.guidingIsMoveCommands())
@@ -1497,7 +1558,13 @@ namespace ASCOM.LX90
                // Negate the guide rate. Reverse U/D for :RE# commands
                guideRate = -guideRate;
             }
-            serialPort.Transmit(":RE" + String.Format("{0:0.0####;-0.0####}", guideRate) + "#");
+
+            // Only issue :RE if the rate is not what we have already set.
+            if (!AxisRates.ratesApproxEqual(guideRate, DriverStateBase.lastSecondaryAxisRate))
+            {
+               serialPort.Transmit(":RE" + String.Format("{0:0.0####;-0.0####}", guideRate) + "#");
+               DriverStateBase.lastSecondaryAxisRate = guideRate;
+            }
             serialPort.Transmit(MoveAxisHelper.AxisToMovementDirectionCommandString(TelescopeAxes.axisSecondary, guideN));
          }
          else if (Telescope.guidingIsMoveCommands())
