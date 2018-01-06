@@ -40,8 +40,16 @@ The ASCOM.LX90.Telescope driver exposes the <a href="http://www.ascom-standards.
 
 The driver is implemented as a GoF State Pattern. State transition diagrams are provided in the docs/ directory.
 
+### Overview.
+
+   ![Overview.png](Patched497/docs/Overview.png)
+
 In summary, there is a single thread managing a thread safe queue of tasks. The tasks are anything that talks to the mount. Tasks are queued and the queue is serviced. The GoF State pattern
 ensures that only tasks that are legal for the current state are performed. All other tasks are no-ops.
+
+### Class Diagram.
+
+   ![Overview.png](Patched497/docs/ClassDiagram.png)
 
 The telescope axes are managed by independent states. When slewing to a location (Alt/Az or RA/Dec) the axes are set to a single "DualAxisSlewingState" subclass. For individual axis movements
 such as pulse guiding or moving the axis by an ASCOM.Telescope MoveAxis call, each axis has its own independent state.
@@ -51,15 +59,48 @@ Correct combinations of states are enforced across axes.
 E.g. 
 
  1. PrimaryAxis in TrackingState and SecondaryAxis in Tracking State.
- 2. Either axis in TrackingState and the other axis in PulseGuiding...State.
- 3. Either axis in TrackingState and the other axis in Move...SlewingState.
+ 2. Either axis in TrackingState and the other axis in PulseGuide...State.
+ 3. Either axis in TrackingState and the other axis in Slew...AxisState.
  4. Both axes in pulse guiding state.
- 5. Both axes in Move...SlewingState.
- 6. DualAxisSlewingState (SlewingToAltAzState or SlewingToCoordinatesState).
+ 5. Both axes in Slew...AxisState.
+ 6. DualAxisSlewingState (SlewToAltAzState or SlewToCoordinatesState).
  7. Any single axis pulse guiding with any slew is disallowed.
  8. Any dual axis slew with any pulse guiding is disallowed.
- 9. Any single axis Move...SlewingState with any pulse guide or dual axis slew is disallowed.
+ 9. Any single axis Slew...AxisState with any pulse guide or dual axis slew is disallowed.
  10. Any slew can be interrupted by AbortSlew. So changing from one thing to another generally requires the issue of AbortSlew then the change to the desired movement.
+
+### State Transitions.
+
+Start and end states have bold outlines. State transitioning operations are shown. These are the functions that atomically change the axis/dual axis state to a new state. If a state object does not support a particular function because it is invalid for that state, it simply does not override the function concerned and the default implementation on DriverStateBase (see the class diagram above) is called and the result is a no-op.
+
+Fundamentally the architecture follows the state transition diagram, and the requirements of the ASCOM ITelescopeV3 interface and prevents invalid operations on any given state and prevents deviation from the expectations of the ASCOM.ITelescopeV3 interface by simply providing no pathway to do the wrong thing - at least, sans-bugs, that is the intent expressed in the design and state transition diagrams below.
+
+#### Slew to Alt/Az|celestial coordinates.
+
+The state transitions diagrammed here represent movement by the mount on both axes to a location on the sky by a coordinate system.
+
+   ![SlewStateMachine.png](Patched497/docs/SlewStateMachine.png)
+   
+#### Move single axis.   
+
+The state transitions diagrammed here represent movement of a single axis under the control of the client such that the client starts the movement with MoveAxis(...) on the ASCOM ITelescopeV3 interface, and when done issues the same MoveAxis(...) command with a zero rate.
+
+   ![MoveAxisStateMachine.png](Patched497/docs/MoveAxisStateMachine.png)
+   
+#### Pulse guide.
+
+The state transitions diagrammed here represent pulse guiding. Three pulse guding algorithms are provided.
+
+This is also where the asymmetric guiding correction coefficient (overly fancy name for "fudge factor")
+is used to further scale the duration of the actual time spent moving in the given guide direction. Pulse guiding is not optional. Three algorithms are provided:
+ 1. Pulse guide commands. Meade pulse guide commands are issued. On my LX90 these move the scope at an offset from sidereal of ± 0.5 × sidereal rate. i.e. The motor is always driving W, never stopped. Note, there is some funkiness around these commands especially if you have changed time zones or similar. I have seen the following behaviour: Turn on the mount. Experiment with pulse guiding. Mount moves. Change timezone. Mount no longer responds to pulse guide commands. The problem appears to be a long standing bug in the Meade firmware. The mount can get its local sidereal time thoroughly wrong, toggling the time zone fixes this but can kill pulse guiding. Go figure.
+ 2. :RA#/:RE# at guide rate. The driver issues the command to move the mount and to stop the slew in the direction requested when the pulse guide time is elapsed. Whatever arbitrary guide rate you set, the driver will issue :RA#/:RE# commands at that arbitrary rate. Experimentally using PHD/2 and a guide pulse of 5000ms the following are the results at different guide rates:
+     * 1.0 × sidereal rate shows movement of 5 sidereal seconds (5 sec in RA). This is like the "Move commands at sidereal" below.
+     * 0.5 × sidereal rate shows between 2 and 3 sidereal seconds (2-3 sec in RA). i.e. Guiding is moving the scope at an offset from sidereal of ± 0.5 × sidereal rate.
+     * 0.25 × sidereal rate shows movement of approximately 1 sidereal seconds (1 sec in RA). i.e. Guiding is moving the scope at an offset from sidereal of ± 0.25 × sidereal rate.
+ 3. Move commands at sidereal. On my LX90 these move the scope at an offset from sidereal of ± 1.0 × sidereal rate. i.e. Guide W = 2 × sidereal. Guide E = motor stopped. The driver issues the command to move the mount and to stop the slew in the direction requested when the pulse guide time is elapsed. These are the classic Meade move commands at sidereal scaled by the guide rate. e.g. Specify a guide rate of 0.5 and pulse guide durations requested will be scaled by 0.5 such at a 1s guide pulse becomes a 0.5s move.<br /></li>
+
+   ![PulseGuidingStateMachine.png](Patched497/docs/PulseGuidingStateMachine.png)
 
 ## A note about :RA# and :RE# commands.
 
