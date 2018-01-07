@@ -23,10 +23,17 @@ Having made this decision and having applied various SW patches to my scope's #4
 
 ## Prerequisites.
 
+Install Visual Studio 2013. Specifically you need to be able to develop in C#.
+
 ASCOM Driver Development and prerequisites are found at <a href="http //ascom-standards.org/Developer/DriverImpl.htm" target="browser">ASCOM Driver Development</a>
+
 Familiarise yourself with the prerequisites and installation of the framework. Install the ASCOM Driver Development prerequisites and the developer components and tools first.
 
-Documentation specific to this driver is found in the provided Readme.htm and comments throughout the source code.
+Install the Inno Setup Compiler. Currently I use 5.58 because the latest version does not play nicely with the script template ASCOM provide.
+
+The inno script for installing the release build of the driver when you have successfully built it is "Patched497/Patched497 Setup.iss". This does everything to ensure the driver is available to ASCOM. i.e. You can pick the driver from the list ASCOM provides.
+
+Further documentation specific to this driver is found in the provided Readme.htm and comments throughout the source code.
 
 ## Caution.
 
