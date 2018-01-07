@@ -47,7 +47,7 @@ The driver is implemented as a GoF State Pattern. State transition diagrams are 
 
 The ASCOM.LX90.Telescope driver exposes the <a href="http://www.ascom-standards.org/Help/Platform/html/T_ASCOM_DeviceInterface_ITelescopeV3.htm" target="browser">ASCOM ITelescopeV3 interface.</a>
 
-It attempts to rigorously adhere to the expectations of this interface in terms of exceptions thrown and states that test true post calling the functions on that interface, etc.
+The driver attempts to rigorously adhere to the expectations of this interface in terms of exceptions thrown and states that test true/false post calling the functions on that interface, and what next states or functions are valid etc.
 
 ### Overview.
 
