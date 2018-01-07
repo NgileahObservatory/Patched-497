@@ -27,7 +27,7 @@ Install Visual Studio 2013. Specifically you need to be able to develop in C#.
 
 ASCOM Driver Development and prerequisites are found at <a href="http //ascom-standards.org/Developer/DriverImpl.htm" target="browser">ASCOM Driver Development</a>
 
-Familiarise yourself with the prerequisites and installation of the framework. Install the ASCOM Driver Development prerequisites and the developer components and tools first.
+Familiarise yourself with the prerequisites and installation of the framework. Install the ASCOM Driver Development prerequisites and the developer components and after Visual Studio first.
 
 Install the Inno Setup Compiler. Currently I use 5.58 because the latest version does not play nicely with the script template ASCOM provide.
 
@@ -39,13 +39,15 @@ Further documentation specific to this driver is found in the provided Readme.ht
 
 The code should generally be thought of as highly experimental. The only test systems available to the developer (me) are a circa 2007 12" LX90 LNT, and a similarly aged ETX 125.
 
-## ASCOM Telescope Interface.
-
-The ASCOM.LX90.Telescope driver exposes the <a href="http://www.ascom-standards.org/Help/Platform/html/T_ASCOM_DeviceInterface_ITelescopeV3.htm" target="browser">ASCOM ITelescopeV3 interface.</a>
-
 ## Software Architecture.
 
 The driver is implemented as a GoF State Pattern. State transition diagrams are provided in the docs/ directory.
+
+### ASCOM Telescope Interface.
+
+The ASCOM.LX90.Telescope driver exposes the <a href="http://www.ascom-standards.org/Help/Platform/html/T_ASCOM_DeviceInterface_ITelescopeV3.htm" target="browser">ASCOM ITelescopeV3 interface.</a>
+
+It attempts to rigorously adhere to the expectations of this interface in terms of exceptions thrown and states that test true post calling the functions on that interface, etc.
 
 ### Overview.
 
