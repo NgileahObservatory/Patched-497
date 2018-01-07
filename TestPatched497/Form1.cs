@@ -305,44 +305,37 @@ namespace ASCOM.LX90
             {
                stressRATimer.Stop();
                Util utilities = new Util();
-               //double RA = driver.RightAscension;
-               //if (source == null && args == null)
-               //{
-               //   lastRA = RA;
-               //}
+               double RA = driver.RightAscension;
+               if (source == null && args == null)
+               {
+                  lastRA = RA;
+               }
+               form.raLabel.Text = String.Format("{0:0.00000}", utilities.HoursToHMS(RA));
                if (lastRAE)
                {
-                  //if (lastRA <= RA && source != null && args != null)
-                  //{
-                  //   MessageBox.Show("No movement in RA or movement in wrong direction. RA now " 
-                  //      + String.Format("{0:0.00000}", utilities.HoursToHMS(RA))
-                  //      + " vs "
-                  //      + String.Format("{0:0.00000}", utilities.HoursToHMS(lastRA)), ":RA# Guiding Failure", MessageBoxButtons.OK);
-                  //   return;
-                  //}
-                  //else
-                  //{
-                     driver.PulseGuide(DeviceInterface.GuideDirections.guideWest,10000);
-                  //}
+                  if (lastRA >= RA && source != null && args != null)
+                  {
+                     MessageBox.Show("No movement in RA or movement in wrong direction. RA now " 
+                        + String.Format("{0:0.00000}", utilities.HoursToHMS(RA))
+                        + " vs "
+                        + String.Format("{0:0.00000}", utilities.HoursToHMS(lastRA)), ":RA# Guiding Failure", MessageBoxButtons.OK);
+                  }
+                  driver.PulseGuide(DeviceInterface.GuideDirections.guideWest, 8000);
                   lastRAE = false;
                }
                else
                {
-                  //if( lastRA >= RA && source != null && args != null)
-                  //{
-                  //   MessageBox.Show("No movement in RA or movement in wrong direction. RA now "
-                  //      + String.Format("{0:0.00000}", utilities.HoursToHMS(RA))
-                  //      + " vs "
-                  //      + String.Format("{0:0.00000}", utilities.HoursToHMS(lastRA)), ":RA# Guiding Failure", MessageBoxButtons.OK);
-                  //   return;
-                  //}
-                  //else
-                  //{
-                     driver.PulseGuide(DeviceInterface.GuideDirections.guideEast, 10000);
-                  //}
+                  if( lastRA <= RA && source != null && args != null)
+                  {
+                     MessageBox.Show("No movement in RA or movement in wrong direction. RA now "
+                        + String.Format("{0:0.00000}", utilities.HoursToHMS(RA))
+                        + " vs "
+                        + String.Format("{0:0.00000}", utilities.HoursToHMS(lastRA)), ":RA# Guiding Failure", MessageBoxButtons.OK);
+                  }
+                  driver.PulseGuide(DeviceInterface.GuideDirections.guideEast, 8000);
                   lastRAE = true;
                }
-               //lastRA = RA;
+               lastRA = RA;
                stressRATimer.Start();
             }
          }
@@ -362,44 +355,38 @@ namespace ASCOM.LX90
             {
                stressRETimer.Stop();
                Util utilities = new Util();
-               //double Dec = driver.Declination;
-               //if (source == null && args == null)
-               //{
-               //   lastDec = Dec;
-               //}
+               double Dec = driver.Declination;
+               if (source == null && args == null)
+               {
+                  lastDec = Dec;
+               }
+               form.decLabel.Text = String.Format("{0:0.00000}", utilities.DegreesToDMS(Dec));
+
                if (lastREN)
                {
-                  //if (lastDec <= Dec && source != null && args != null)
-                  //{
-                  //   MessageBox.Show("No movement in Dec or movement in wrong direction."
-                  //      + String.Format("{0:0.00000}", utilities.DegreesToDMS(Dec))
-                  //      + " vs "
-                  //      + String.Format("{0:0.00000}", utilities.DegreesToDMS(lastDec)), ":RE# Guiding Failure", MessageBoxButtons.OK);
-                  //   return;
-                  //}
-                  //else
-                  //{
-                     driver.PulseGuide(DeviceInterface.GuideDirections.guideSouth, 10000);
-                  //}
+                  if (lastDec <= Dec && source != null && args != null)
+                  {
+                     MessageBox.Show("No movement in Dec or movement in wrong direction. "
+                        + String.Format("{0:0.00000}", utilities.DegreesToDMS(Dec))
+                        + " vs "
+                        + String.Format("{0:0.00000}", utilities.DegreesToDMS(lastDec)), ":RE# Guiding Failure", MessageBoxButtons.OK);
+                  }
+                  driver.PulseGuide(DeviceInterface.GuideDirections.guideSouth, 8000);
                   lastREN = false;
                }
                else
                {
-                  //if (lastDec >= Dec && source != null && args != null)
-                  //{
-                  //   MessageBox.Show("No movement in Dec or movement in wrong direction."
-                  //      + String.Format("{0:0.00000}", utilities.DegreesToDMS(Dec))
-                  //      + " vs "
-                  //      + String.Format("{0:0.00000}", utilities.DegreesToDMS(lastDec)), ":RE# Guiding Failure", MessageBoxButtons.OK);
-                  //   return;
-                  //}
-                  //else
-                  //{
-                     driver.PulseGuide(DeviceInterface.GuideDirections.guideNorth, 10000);
-                  //}
+                  if (lastDec >= Dec && source != null && args != null)
+                  {
+                     MessageBox.Show("No movement in Dec or movement in wrong direction. "
+                        + String.Format("{0:0.00000}", utilities.DegreesToDMS(Dec))
+                        + " vs "
+                        + String.Format("{0:0.00000}", utilities.DegreesToDMS(lastDec)), ":RE# Guiding Failure", MessageBoxButtons.OK);
+                  }
+                  driver.PulseGuide(DeviceInterface.GuideDirections.guideNorth, 8000);
                   lastREN = true;
                }
-               //lastDec = Dec;
+               lastDec = Dec;
                stressRETimer.Start();
             }
          }
@@ -415,7 +402,7 @@ namespace ASCOM.LX90
       {
          if (stressRATimer == null)
          {
-            //refreshTimer.Stop();
+            refreshTimer.Stop();
             stressRATimer = new System.Windows.Forms.Timer();
             refreshRAStateData(null, null);
             stressRATimer.Tick += new EventHandler(refreshRAStateData);
@@ -426,8 +413,8 @@ namespace ASCOM.LX90
          {
             stressRATimer.Stop();
             stressRATimer = null;
-            //if (stressRETimer == null)
-            //   refreshTimer.Start();
+            if (stressRETimer == null)
+               refreshTimer.Start();
          }
       }
 
@@ -435,7 +422,7 @@ namespace ASCOM.LX90
       {
          if (stressRETimer == null)
          {
-            //refreshTimer.Stop();
+            refreshTimer.Stop();
             stressRETimer = new System.Windows.Forms.Timer();
             refreshREStateData(null, null);
             stressRETimer.Tick += new EventHandler(refreshREStateData);
@@ -446,8 +433,8 @@ namespace ASCOM.LX90
          {
             stressRETimer.Stop();
             stressRETimer = null;
-            //if (stressRATimer == null)
-            //   refreshTimer.Start();
+            if (stressRATimer == null)
+               refreshTimer.Start();
          }
       }
    }

@@ -715,26 +715,48 @@ namespace ASCOM.LX90
 
       public override double Declination()
       {
-         serialPort.Transmit(":GD#");
-         string decl = serialPort.ReceiveTerminated("#").Replace("#", "");
-         // Can return sDD*MM# or sDD*MM'SS#
-         decl = decl.Replace('*', ':').Replace('°', ':').Replace("ß", ":");
-         decl = decl.Replace('\'', ':');
-         if (decl.Length == 6)
-            decl += ":00";
-         return utilities.DMSToDegrees(decl);
+         // Don't always get a response! Never seen this fail more than once.
+         // I will wear the result if we recurse to death, but that never seems
+         // to happen.
+         try
+         {
+            serialPort.Transmit(":GD#");
+            string decl = serialPort.ReceiveTerminated("#").Replace("#", "");
+            // Can return sDD*MM# or sDD*MM'SS#
+            decl = decl.Replace('*', ':').Replace('°', ':').Replace("ß", ":");
+            decl = decl.Replace('\'', ':');
+            if (decl.Length == 6)
+               decl += ":00";
+            return utilities.DMSToDegrees(decl);
+         }
+         catch (Exception)
+         {
+            // try again...
+            return Declination();
+         }
       }
 
       public override double RightAscension()
       {
-         serialPort.Transmit(":GR#");
-         string ra = serialPort.ReceiveTerminated("#").Replace("#", "");
-         if (ra.Contains("."))
+         // Don't always get a response! Never seen this fail more than once.
+         // I will wear the result if we recurse to death, but that never seems
+         // to happen.
+         try
          {
-            uint t = uint.Parse(ra.Substring(6, 1)) * 60;
-            ra = ra.Substring(0, 5) + ":" + t.ToString("D2");
+            serialPort.Transmit(":GR#");
+            string ra = serialPort.ReceiveTerminated("#").Replace("#", "");
+            if (ra.Contains("."))
+            {
+               uint t = uint.Parse(ra.Substring(6, 1)) * 60;
+               ra = ra.Substring(0, 5) + ":" + t.ToString("D2");
+            }
+            return utilities.HMSToHours(ra);
          }
-         return utilities.HMSToHours(ra);
+         catch(Exception)
+         {
+            // try again...
+            return RightAscension();
+         }
       }
 
       /// <summary>
