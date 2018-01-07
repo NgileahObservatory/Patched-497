@@ -106,3 +106,17 @@ is used to further scale the duration of the actual time spent moving in the giv
 
 These Meade commands are very fickle as near as I can tell. All manner of tides, the position of the planets, a disturbance in the Earth's magnetic field seem to be able to prevent these
 from working correctly. I have been unable to find the correct combination to make these commands work consistently ALL the time.
+
+## Driver setup dialog.
+
+   ![DriverSetup.png](Patched497/docs/DriverSetup.png)
+
+Referring to the dialog above:
+
+ 1. Select the COM port your mount is on. Currently this is manual.
+ 2. Guide Rate. Set whatever your guide rate ACTUALLY proves to be here if you can use the Meade Pulse Guide commands or custom guide rate you want if you intend to guide with :RA#/:RE# commands on your mount. See the notes above about using Meade move commands and using this value to scale time at sidereal rate. Experimentally pulse guide commands on my LX90 yield a guide rate 0.5 × Sidereal. If you can only use the Meade move commands at sidereal, this value will be used to scale the time of the sidereal movements such that the mount behaves as if its guide rate is the value you specified here.
+ 3. This is where you can compensate for asymmetric guide slew performance. You may see this calibrating a guiding program like PHD/2 guiding for example. Fundamentally, equal time slewed E/W yields a different distance moved. The value entered here will scale the time of the slew in the direction selected (East/West) such that you should be able to obtain an equal distance slewed over time in each direction. Scale down not up. i.e. Scale such that a shorter guide pulse will move the same distance in the axis that moves greatest in a given time.
+ 4. Check to indicate that you wish to use the HIGHLY EXPERIMENTAL :RA#/:RE# features of a patched handset.
+ 5. Indicate whether L/R or Up/Down reversal is required for the mount to slew in the correct direction for :RA# or :RE# commands. Internally the reality is that the rate is set and :Me#/:Mw# or :Mn#/:Ms# are issued as per normal. The L/R or Up/Down reversal is achieved by changing the sign of the :RA# or :RE# command. E.g. :RA-1.5# followed by :Mw# on my mount will move the mount at 1.5 degrees/sec W and correspondingly, :RA-1.5# followed by :Me# will move E at 1.5 degrees/sec. In that example, I need to always negate the rate for slews to move in the correct direction. Experiment with your mount. Make sure you have set any date/time, location, timezone, etc. you need to first. It turns out these can determine which reversals are required. Best do the necessary the first time than discover your mount going the wrong direction later. See the note above about :RA#/:RE# commands. FICKLE.
+ 6. See the explanation of the pulse guiding algorithms above.
+ 7. Focal length, aperture, secondary diameter and site elevation are required by ASCOM but not obtained from the mount. These are static values and should match your mount, OTA and site location. 
