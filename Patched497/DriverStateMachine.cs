@@ -482,7 +482,7 @@ namespace ASCOM.LX90
       /// <summary>
       /// Thread safe queue of tasks requested of the mount.
       /// </summary>
-      public ConcurrentQueue<Action> WorkQueue = new ConcurrentQueue<Action>();
+      public BlockingCollection<Action> WorkQueue = new BlockingCollection<Action>();
 
       /// <summary>
       /// Worker thread in effect that invokes the queued task otherwise sleeps.
@@ -494,7 +494,7 @@ namespace ASCOM.LX90
             Action func;
             while (true)
             {
-               if (WorkQueue.TryDequeue(out func))
+               if (WorkQueue.TryTake(out func, 100))
                {
                   try
                   {
@@ -509,10 +509,6 @@ namespace ASCOM.LX90
                      DriverStateBase.serialPort.ClearBuffers();
                      Telescope.LogMessage("Exception in HBX work queue thread - \n", e.Message);
                   }
-               }
-               else
-               {
-                  System.Threading.Thread.Sleep(1);
                }
             }
          });
@@ -638,6 +634,8 @@ namespace ASCOM.LX90
       {
          if (serialPort != null)
          {
+            // Make sure we cannot leave the mount in a slewing state.
+            serialPort.Transmit(":Q#");
             serialPort.Connected = false;
             serialPort.Dispose();
             serialPort = null;
@@ -1483,7 +1481,7 @@ namespace ASCOM.LX90
                   ScopeMovementCancellationTokenSource.Token.ThrowIfCancellationRequested();
                   Thread.Sleep(1);
                }
-               MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
+               MountTaskHandler.Instance.WorkQueue.Add(() =>
                   MasterCurrentState = MasterCurrentState.InternalPulseGuideComplete());
                return true;
             }
@@ -1494,7 +1492,7 @@ namespace ASCOM.LX90
             }
             catch (Exception e)
             {
-               MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
+               MountTaskHandler.Instance.WorkQueue.Add(() =>
                   CurrentState = MasterCurrentState.AbortSlew());
                throw e;
             }
@@ -1613,7 +1611,7 @@ namespace ASCOM.LX90
                   ScopeMovementCancellationTokenSource.Token.ThrowIfCancellationRequested();
                   Thread.Sleep(1);
                }
-               MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
+               MountTaskHandler.Instance.WorkQueue.Add(() =>
                   SecondaryAxisCurrentState = SecondaryAxisCurrentState.InternalPulseGuideComplete());
                return true;
             }
@@ -1624,7 +1622,7 @@ namespace ASCOM.LX90
             }
             catch (Exception e)
             {
-               MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
+               MountTaskHandler.Instance.WorkQueue.Add(() =>
                   SecondaryAxisCurrentState = SecondaryAxisCurrentState.AbortSlew());
                throw e;
             }
@@ -1710,7 +1708,7 @@ namespace ASCOM.LX90
                   while (isHwSlewing)
                   {
                      Task<bool> hwSlewingTask = new Task<bool>(() => { return InternalIsHwSlewing(); });
-                     MountTaskHandler.Instance.WorkQueue.Enqueue(() => hwSlewingTask.RunSynchronously());
+                     MountTaskHandler.Instance.WorkQueue.Add(() => hwSlewingTask.RunSynchronously());
                      if (isHwSlewing = hwSlewingTask.Result)
                      {
                         ScopeMovementCancellationTokenSource.Token.ThrowIfCancellationRequested();
@@ -1719,7 +1717,7 @@ namespace ASCOM.LX90
                      }
                   }
 
-                  MountTaskHandler.Instance.WorkQueue.Enqueue(() => 
+                  MountTaskHandler.Instance.WorkQueue.Add(() => 
                      // If still the expected state, then this returns all the
                      // axes states to what they were before we kicked off the slew.
                      CurrentState = MasterCurrentState.ResumeTracking());
@@ -1732,7 +1730,7 @@ namespace ASCOM.LX90
                }
                catch (Exception e)
                {
-                  MountTaskHandler.Instance.WorkQueue.Enqueue(() => 
+                  MountTaskHandler.Instance.WorkQueue.Add(() => 
                      CurrentState = MasterCurrentState.AbortSlew());
                   throw e;
                }
@@ -1740,7 +1738,7 @@ namespace ASCOM.LX90
          }
          catch (Exception e)
          {
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => 
+            MountTaskHandler.Instance.WorkQueue.Add(() => 
                CurrentState = MasterCurrentState.AbortSlew());
             throw e;
          }
@@ -1806,7 +1804,7 @@ namespace ASCOM.LX90
                   while(isHwSlewing)
                   {
                      Task<bool> hwSlewingTask = new Task<bool>(() => { return InternalIsHwSlewing(); });
-                     MountTaskHandler.Instance.WorkQueue.Enqueue(() => hwSlewingTask.RunSynchronously());
+                     MountTaskHandler.Instance.WorkQueue.Add(() => hwSlewingTask.RunSynchronously());
                      if (isHwSlewing = hwSlewingTask.Result)
                      {
                         ScopeMovementCancellationTokenSource.Token.ThrowIfCancellationRequested();
@@ -1816,7 +1814,7 @@ namespace ASCOM.LX90
                   }
 
                   // HW no longer reports slewing so queue slew complete.
-                  MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
+                  MountTaskHandler.Instance.WorkQueue.Add(() =>
                      // If still the expected state, then this returns all the
                      // axes states to what they were before we kicked off the slew.
                      CurrentState = MasterCurrentState.ResumeTracking());
@@ -1829,7 +1827,7 @@ namespace ASCOM.LX90
                }
                catch (Exception e)
                {
-                  MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
+                  MountTaskHandler.Instance.WorkQueue.Add(() =>
                      CurrentState = MasterCurrentState.AbortSlew());
                   throw e;
                }
@@ -1837,7 +1835,7 @@ namespace ASCOM.LX90
          }
          catch (Exception e)
          {
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() =>
+            MountTaskHandler.Instance.WorkQueue.Add(() =>
                CurrentState = MasterCurrentState.AbortSlew());
             throw e;
          }

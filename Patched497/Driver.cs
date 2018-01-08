@@ -193,7 +193,7 @@ namespace ASCOM.LX90
                }
             }
          });
-         MountTaskHandler.Instance.WorkQueue.Enqueue(() => initialiseTask.RunSynchronously());
+         MountTaskHandler.Instance.WorkQueue.Add(() => initialiseTask.RunSynchronously());
          initialiseTask.Wait();
 
          if (tl.Enabled)
@@ -316,7 +316,7 @@ namespace ASCOM.LX90
          {
             DriverStateBase.MasterCurrentState.Disconnect();
          });
-         MountTaskHandler.Instance.WorkQueue.Enqueue(() => ensureDisconnectedTask.RunSynchronously());
+         MountTaskHandler.Instance.WorkQueue.Add(() => ensureDisconnectedTask.RunSynchronously());
          ensureDisconnectedTask.Wait();
          // Clean up the tracelogger and util objects
          tl.Enabled = false;
@@ -336,7 +336,7 @@ namespace ASCOM.LX90
             { 
                return DriverStateBase.MasterCurrentState.IsConnected(); 
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => isConnectedTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => isConnectedTask.RunSynchronously());
             isConnectedTask.Wait();
             bool connected = isConnectedTask.Result;
             if (verbose)
@@ -366,7 +366,7 @@ namespace ASCOM.LX90
                   }
                }
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => connectTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => connectTask.RunSynchronously());
             connectTask.Wait();
          }
       }
@@ -467,7 +467,7 @@ namespace ASCOM.LX90
             DriverStateBase.CurrentState = DriverStateBase.SecondaryAxisCurrentState.AbortSlew();
             DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.AbortSlew();
          });
-         MountTaskHandler.Instance.WorkQueue.Enqueue(() => abortSlewTask.RunSynchronously());
+         MountTaskHandler.Instance.WorkQueue.Add(() => abortSlewTask.RunSynchronously());
          abortSlewTask.Wait();
          if (tl.Enabled)
          {
@@ -483,7 +483,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.AlignmentMode();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => alignmentModeTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => alignmentModeTask.RunSynchronously());
             alignmentModeTask.Wait();
             if (verbose)
             {
@@ -501,7 +501,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.Altitude();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => altTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => altTask.RunSynchronously());
             altTask.Wait();
             if (verbose)
             {
@@ -561,7 +561,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.IsParked();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => atParkTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => atParkTask.RunSynchronously());
             atParkTask.Wait();
             if (verbose)
             {
@@ -588,7 +588,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.Azimuth();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => azTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => azTask.RunSynchronously());
             azTask.Wait();
             if (verbose)
             {
@@ -836,7 +836,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.Declination();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => declTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => declTask.RunSynchronously());
             declTask.Wait();
             if (verbose)
             {
@@ -855,7 +855,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.DeclinationRate();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => declRateTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => declRateTask.RunSynchronously());
             declRateTask.Wait();
             if (verbose)
             {
@@ -979,7 +979,7 @@ namespace ASCOM.LX90
                DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.ResumeTracking(Axis);
             }
          });
-         MountTaskHandler.Instance.WorkQueue.Enqueue(() => slewTask.RunSynchronously());
+         MountTaskHandler.Instance.WorkQueue.Add(() => slewTask.RunSynchronously());
          slewTask.Wait();
       }
 
@@ -996,7 +996,7 @@ namespace ASCOM.LX90
                return DriverStateBase.MasterCurrentState.IsSlewing()
                   || DriverStateBase.SecondaryAxisCurrentState.IsSlewing();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => isSlewingTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => isSlewingTask.RunSynchronously());
             isSlewingTask.Wait();
             if (verbose)
             {
@@ -1013,7 +1013,7 @@ namespace ASCOM.LX90
          {
             DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.Park();
          });
-         MountTaskHandler.Instance.WorkQueue.Enqueue(() => parkTask.RunSynchronously());
+         MountTaskHandler.Instance.WorkQueue.Add(() => parkTask.RunSynchronously());
          parkTask.Wait();
       }
 
@@ -1072,7 +1072,7 @@ namespace ASCOM.LX90
             {
                DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.PulseGuide(Direction, Duration);
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => pulseGuideTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => pulseGuideTask.RunSynchronously());
             // This waits only as long as the item is in the queue and then runs.
             pulseGuideTask.Wait();
          }
@@ -1087,7 +1087,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.IsPulseGuiding();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => isPulseGuidingTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => isPulseGuidingTask.RunSynchronously());
             isPulseGuidingTask.Wait();
             if (verbose)
             {
@@ -1106,7 +1106,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.RightAscension();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => raTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => raTask.RunSynchronously());
             raTask.Wait();
             if (verbose)
             {
@@ -1124,7 +1124,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.RightAscensionRate();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => raRateTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => raRateTask.RunSynchronously());
             raRateTask.Wait();
             if (verbose)
             {
@@ -1180,7 +1180,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.SiderealTime();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => siderealTimeTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => siderealTimeTask.RunSynchronously());
             siderealTimeTask.Wait();
             if (verbose)
             {
@@ -1227,7 +1227,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.SiteLatitude();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => siteLatTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => siteLatTask.RunSynchronously());
             siteLatTask.Wait();
             if (verbose)
             {
@@ -1245,7 +1245,7 @@ namespace ASCOM.LX90
             {
                DriverStateBase.MasterCurrentState.SetSiteLatitude(value);
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => setSiteLatTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => setSiteLatTask.RunSynchronously());
             setSiteLatTask.Wait();
          }
       }
@@ -1259,7 +1259,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.SiteLongitude();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => siteLonTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => siteLonTask.RunSynchronously());
             siteLonTask.Wait();
             if (verbose)
             {
@@ -1277,7 +1277,7 @@ namespace ASCOM.LX90
             {
                DriverStateBase.MasterCurrentState.SetSiteLongitude(value);
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => setSiteLonTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => setSiteLonTask.RunSynchronously());
             setSiteLonTask.Wait();
          }
       }
@@ -1310,7 +1310,7 @@ namespace ASCOM.LX90
          {
             DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.SlewToAltAzAsync(Azimuth, Altitude);
          });
-         MountTaskHandler.Instance.WorkQueue.Enqueue(() => slewTask.RunSynchronously());
+         MountTaskHandler.Instance.WorkQueue.Add(() => slewTask.RunSynchronously());
          slewTask.Wait();
       }
 
@@ -1335,7 +1335,7 @@ namespace ASCOM.LX90
          {
             DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.SlewToCoordinatesAsync(RightAscension, Declination);
          });
-         MountTaskHandler.Instance.WorkQueue.Enqueue(() => slewTask.RunSynchronously());
+         MountTaskHandler.Instance.WorkQueue.Add(() => slewTask.RunSynchronously());
          slewTask.Wait();
       }
 
@@ -1368,7 +1368,7 @@ namespace ASCOM.LX90
          {
             DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.SyncToAltAz(Azimuth, Altitude);
          });
-         MountTaskHandler.Instance.WorkQueue.Enqueue(() => syncTask.RunSynchronously());
+         MountTaskHandler.Instance.WorkQueue.Add(() => syncTask.RunSynchronously());
          syncTask.Wait();
       }
 
@@ -1383,7 +1383,7 @@ namespace ASCOM.LX90
          {
             DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.SyncToCoordinates(Azimuth, Altitude);
          });
-         MountTaskHandler.Instance.WorkQueue.Enqueue(() => syncTask.RunSynchronously());
+         MountTaskHandler.Instance.WorkQueue.Add(() => syncTask.RunSynchronously());
          syncTask.Wait();
       }
 
@@ -1455,7 +1455,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.IsTracking();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => trackingTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => trackingTask.RunSynchronously());
             trackingTask.Wait();
             if (tl.Enabled)
             {
@@ -1483,7 +1483,7 @@ namespace ASCOM.LX90
                   DriverStateBase.CurrentState = DriverStateBase.MasterCurrentState.TrackLunar();
                }
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => setTrackingTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => setTrackingTask.RunSynchronously());
             setTrackingTask.Wait();
          }
       }
@@ -1539,7 +1539,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.UTCDate();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => utcDateTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => utcDateTask.RunSynchronously());
             utcDateTask.Wait();
             if (verbose)
             {
@@ -1657,7 +1657,7 @@ namespace ASCOM.LX90
             {
                return DriverStateBase.MasterCurrentState.IsConnected();
             });
-            MountTaskHandler.Instance.WorkQueue.Enqueue(() => isConnectedTask.RunSynchronously());
+            MountTaskHandler.Instance.WorkQueue.Add(() => isConnectedTask.RunSynchronously());
             isConnectedTask.Wait();
             return isConnectedTask.Result;
          }
